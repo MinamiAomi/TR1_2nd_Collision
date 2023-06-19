@@ -6,11 +6,6 @@
 
 #include "Math/MathUtils.hpp"
 
-struct Vertex {
-    Vector3 position;
-    Vector3 normal;
-};
-
 enum class DrawMode {
     kObject,
     kWireFrame
@@ -59,6 +54,10 @@ private:
     const Renderer& operator=(const Renderer&) = delete;
     Renderer(Renderer&&) = delete;
     Renderer& operator=(Renderer&&) = delete;
+
+    void CreateBoxMesh();
+    void CreateSphereMesh();
+    void CreateCapusleMesh();
 
     class Impl; Impl* const pimpl_;
 };

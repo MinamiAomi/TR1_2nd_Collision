@@ -48,7 +48,7 @@ public:
     inline constexpr float& operator[](size_t index) noexcept {
         return const_cast<float&>(static_cast<const Vector2&>(*this)[index]);
     }
-
+  
     // inline constexpr explicit operator Vector3() const;
 
     friend inline constexpr Vector2 operator+(const Vector2& rhs) noexcept {

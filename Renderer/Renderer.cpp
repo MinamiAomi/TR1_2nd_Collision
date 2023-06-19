@@ -28,7 +28,11 @@ namespace {
     template<class T>
 
     using ComPtr = Microsoft::WRL::ComPtr<T>;
-   
+
+    struct Vertex {
+        Vector3 position;
+        Vector3 normal;
+    };
     struct Mesh {
         ComPtr<ID3D12Resource> vertexBuffer;
         ComPtr<ID3D12Resource> indexBuffer;
@@ -68,6 +72,51 @@ namespace {
             return 0;
         }
         return DefWindowProc(hwnd, msg, wparam, lparam);
+    }
+
+    void CalcNormals(
+        const std::vector<Vector3>& positions,
+        const std::vector<std::uint16_t>& indices,
+        std::vector<Vertex>* flat_vertices,
+        std::vector<Vertex>* smooth_vertices) {
+        assert(flat_vertices && smooth_vertices);
+        flat_vertices->resize(indices.size());
+        smooth_vertices->resize(positions.size());
+
+        std::vector<std::vector<Vector3>> surface_normals(positions.size());
+        for (size_t i = 0; i < indices.size(); i += 3) {
+            auto i0 = indices[i + 0];
+            auto i1 = indices[i + 1];
+            auto i2 = indices[i + 2];
+
+            auto& pos0 = positions[i0];
+            auto& pos1 = positions[i1];
+            auto& pos2 = positions[i2];
+
+            auto normal = Vector3::Cross(pos1 - pos0, pos2 - pos1);
+            normal = normal.Normalized();
+
+            (*flat_vertices)[i0] = { pos0,normal };
+            (*flat_vertices)[i1] = { pos0,normal };
+            (*flat_vertices)[i2] = { pos0,normal };
+
+            surface_normals[i0].emplace_back(normal);
+            surface_normals[i1].emplace_back(normal);
+            surface_normals[i2].emplace_back(normal);
+        }
+
+        auto position = positions.begin();
+        auto smooth_vertex = smooth_vertices->begin();
+        auto vertex_normals = surface_normals.begin();
+        for (; smooth_vertex != smooth_vertices->end(); position++, smooth_vertex++, vertex_normals++) {
+            Vector3 sum_normal;
+            for (auto& normal : *vertex_normals) {
+                sum_normal += normal;
+            }
+            sum_normal = sum_normal / static_cast<float>(vertex_normals->size());
+            smooth_vertex->position = *position; 
+            smooth_vertex->normal = sum_normal;             
+        }
     }
 }
 
@@ -419,7 +468,7 @@ public:
             auto pixelShader = shader_manager.LoadShader(L"object_ps.cso");
             if (!pixelShader) {
                 pixelShader = shader_manager.CompileShader(L"object_ps.hlsl", L"ps_6_0", false);
-            }
+        }
 #endif // !_DEBUG
 
 
@@ -457,7 +506,7 @@ public:
             pixelShader = shader_manager.LoadShader(L"wire_frame_ps.cso");
             if (!pixelShader) {
                 pixelShader = shader_manager.CompileShader(L"wire_frame_ps.hlsl", L"ps_6_0", false);
-            }
+    }
 #endif // !_DEBUG
 
             rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
@@ -466,7 +515,7 @@ public:
             graphicsPipelineStateDesc.PS = *pixelShader;
             graphicsPipelineStateDesc.RasterizerState = rasterizerDesc;
             hr = device_->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&wireFramePipelineState));
-        }
+}
         // インスタンシング用バッファ
         {
             for (uint32_t i = 0; i < kSwapChainBufferCount; ++i) {
@@ -779,5 +828,5 @@ std::size_t Renderer::RegisterMesh(const std::vector<Vertex>& vertices, const st
 
 void Renderer::DrawObject(std::size_t mesh_handle, const Vector3& scale, const Quaternion& rotate, const Vector3& translate, const Vector4& color) {
     pimpl_->AddObjInstance(mesh_handle, Matrix4x4::MakeAffineTransform(scale, rotate, translate), color);
-   // pimpl_->AddLineInstance(mesh_handle, Matrix4x4::MakeAffineTransform(scale, rotate, translate), color);
+    // pimpl_->AddLineInstance(mesh_handle, Matrix4x4::MakeAffineTransform(scale, rotate, translate), color);
 }
