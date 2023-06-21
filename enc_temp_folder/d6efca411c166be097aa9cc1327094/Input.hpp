@@ -18,7 +18,7 @@ enum class Keycode : unsigned char {
 	Equals         = 0x0D,	// = (イコール)
 	BackSpace      = 0x0E,	// BackSpace
 	Tab            = 0x0F,	// Tab
-	Q              = 0x10,	// Q
+	Q              = 0x10,		// Q
 	W              = 0x11,	// W
 	E              = 0x12,	// E
 	R              = 0x13,	// R

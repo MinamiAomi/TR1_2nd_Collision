@@ -23,6 +23,15 @@ struct Transform {
 
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
+    int a = MessageBoxA(nullptr, "Rikihisa ha baka", "OK cancel", MB_OKCANCEL);
+    if (a != 0) {
+        MessageBoxA(nullptr, "0", "", 0);
+    }
+    else {
+        MessageBoxA(nullptr, "!0", "", 0);
+
+    }
+
     Renderer renderer;
     renderer.Initailize(L"RendererTest", 1280, 720);
 

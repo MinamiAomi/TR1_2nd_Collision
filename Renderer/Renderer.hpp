@@ -11,24 +11,6 @@ enum class DrawMode {
     kWireFrame
 };
 
-struct Box {
-    Vector3 size;
-    Quaternion rotate;
-    Vector3 translate;
-};
-
-struct Sphere {
-    Vector3 center;
-    float radius;
-};
-
-struct Capsule {
-    Vector3 center;
-    float radius;
-    float height;
-    Vector3 direction;
-};
-
 class Renderer {
 public:
     static const std::uint32_t kMaxObjectCount = 1024;
@@ -41,11 +23,12 @@ public:
     void EndRendering();
     void Finalize();
 
-    std::size_t RegisterMesh(const std::vector<Vertex>& vertices, const std::vector<std::uint16_t> indices);
+    std::size_t RegisterMesh(const std::vector<Vector3>& positions, const std::vector<std::uint16_t> indices);
 
-    void DrawBox(const Box& box, const Vector4& color);
-    void DrawSphere(const Sphere& sphere, const Vector4& color);
-    void DrawCapsule(const Capsule& cspusle, const Vector4& color);
+    void DrawPlane(const Matrix4x4& world_matrix, const Vector4& color, DrawMode draw_mode);
+    void DrawBox(const Matrix4x4& world_matrix, const Vector4& color, DrawMode draw_mode);
+    void DrawSphere(const Matrix4x4& world_matrix, const Vector4& color, DrawMode draw_mode);
+    void DrawCapsule(const Matrix4x4& world_matrix, const Vector4& color, DrawMode draw_mode);
     
     void DrawObject(std::size_t mesh_handle, const Vector3& scale, const Quaternion& rotate, const Vector3& translate, const Vector4& color);
 
@@ -60,4 +43,8 @@ private:
     void CreateCapusleMesh();
 
     class Impl; Impl* const pimpl_;
+
+    std::size_t plane_;
+    std::size_t box_;
+    std::size_t sphere_;
 };

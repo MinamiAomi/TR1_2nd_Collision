@@ -77,10 +77,8 @@ namespace {
     void CalcNormals(
         const std::vector<Vector3>& positions,
         const std::vector<std::uint16_t>& indices,
-        std::vector<Vertex>* flat_vertices,
         std::vector<Vertex>* smooth_vertices) {
-        assert(flat_vertices && smooth_vertices);
-        flat_vertices->resize(indices.size());
+        assert(smooth_vertices);
         smooth_vertices->resize(positions.size());
 
         std::vector<std::vector<Vector3>> surface_normals(positions.size());
@@ -96,10 +94,6 @@ namespace {
             auto normal = Vector3::Cross(pos1 - pos0, pos2 - pos1);
             normal = normal.Normalized();
 
-            (*flat_vertices)[i0] = { pos0,normal };
-            (*flat_vertices)[i1] = { pos0,normal };
-            (*flat_vertices)[i2] = { pos0,normal };
-
             surface_normals[i0].emplace_back(normal);
             surface_normals[i1].emplace_back(normal);
             surface_normals[i2].emplace_back(normal);
@@ -114,8 +108,8 @@ namespace {
                 sum_normal += normal;
             }
             sum_normal = sum_normal / static_cast<float>(vertex_normals->size());
-            smooth_vertex->position = *position; 
-            smooth_vertex->normal = sum_normal;             
+            smooth_vertex->position = *position;
+            smooth_vertex->normal = sum_normal;
         }
     }
 }
@@ -357,6 +351,19 @@ public:
                 scissorRect_.bottom = static_cast<LONG>(swapChainDesc.Height);
             }
         }
+        {
+            IMGUI_CHECKVERSION();
+            ImGui::CreateContext();
+            ImGui::StyleColorsDark();
+            ImGui_ImplWin32_Init(hwnd_);
+            ImGui_ImplDX12_Init(
+                device_.Get(),
+                kSwapChainBufferCount,
+                DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+                srvDescriptorHeap_.Get(),
+                srvDescriptorHeap_->GetCPUDescriptorHandleForHeapStart(),
+                srvDescriptorHeap_->GetGPUDescriptorHandleForHeapStart());
+        }
         // ルートシグネチャ、パイプライン
         {
 
@@ -440,6 +447,13 @@ public:
             // ブレンドステート
             D3D12_BLEND_DESC blendDesc{};
             blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+            blendDesc.RenderTarget[0].BlendEnable = true;
+            blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
 
             D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
             depthStencilDesc.DepthEnable = true;
@@ -468,7 +482,7 @@ public:
             auto pixelShader = shader_manager.LoadShader(L"object_ps.cso");
             if (!pixelShader) {
                 pixelShader = shader_manager.CompileShader(L"object_ps.hlsl", L"ps_6_0", false);
-        }
+            }
 #endif // !_DEBUG
 
 
@@ -506,7 +520,7 @@ public:
             pixelShader = shader_manager.LoadShader(L"wire_frame_ps.cso");
             if (!pixelShader) {
                 pixelShader = shader_manager.CompileShader(L"wire_frame_ps.hlsl", L"ps_6_0", false);
-    }
+            }
 #endif // !_DEBUG
 
             rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
@@ -515,7 +529,7 @@ public:
             graphicsPipelineStateDesc.PS = *pixelShader;
             graphicsPipelineStateDesc.RasterizerState = rasterizerDesc;
             hr = device_->CreateGraphicsPipelineState(&graphicsPipelineStateDesc, IID_PPV_ARGS(&wireFramePipelineState));
-}
+        }
         // インスタンシング用バッファ
         {
             for (uint32_t i = 0; i < kSwapChainBufferCount; ++i) {
@@ -555,6 +569,11 @@ public:
         assert(SUCCEEDED(hr));
         hr = commandList_->Reset(commandAllocators_[backBufferIndex].Get(), nullptr);
         assert(SUCCEEDED(hr));
+        
+        ImGui_ImplWin32_NewFrame();
+        ImGui_ImplDX12_NewFrame();
+        ImGui::NewFrame();
+
         // レンダ―ターゲットに遷移
         D3D12_RESOURCE_BARRIER barrier{};
         barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -576,6 +595,10 @@ public:
         commandList_->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
     }
     void EndRendering() {
+
+        ImGui::Render();
+        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList_.Get());
+
         uint32_t backBufferIndex = swapChain_->GetCurrentBackBufferIndex();
         // RenderTargetからPresentへ
         D3D12_RESOURCE_BARRIER barrier{};
@@ -608,6 +631,9 @@ public:
         assert(SUCCEEDED(hr));
     }
     void Finalize() {
+        ImGui_ImplDX12_Shutdown();
+        ImGui_ImplWin32_Shutdown();
+        ImGui::DestroyContext();
         CloseHandle(fenceEvent_);
         CloseWindow(hwnd_);
     }
@@ -637,7 +663,7 @@ public:
         return handle;
     }
 
-    void AddLineInstance(std::size_t mesh_handle, const Matrix4x4& world_matrix, const Vector4& color) {
+    void AddWireFrameInstance(std::size_t mesh_handle, const Matrix4x4& world_matrix, const Vector4& color) {
         assert(objectCounter_ < kMaxObjectCount);
         Matrix4x4 mat = world_matrix.Transpose();
         Instance instance{};
@@ -807,6 +833,51 @@ Renderer::~Renderer() {
 
 void Renderer::Initailize(const std::wstring& window_title, const std::uint32_t window_width, const std::uint32_t window_height) {
     pimpl_->Initialize(window_title, window_width, window_height);
+    {
+        std::vector<Vertex> vertices = {
+            {{ -0.5f, 0.0f, -0.5f }, {0.0f,1.0f,0.0f}},
+            {{ -0.5f, 0.0f,  0.5f }, {0.0f,1.0f,0.0f}},
+            {{  0.5f, 0.0f, -0.5f }, {0.0f,1.0f,0.0f}},
+            {{  0.5f, 0.0f,  0.5f }, {0.0f,1.0f,0.0f}} };
+        std::vector<uint16_t> indices = {
+            0,1,2,
+            1,3,2 };
+        plane_ = pimpl_->RegisterMesh(vertices, indices);
+    }
+    {
+        std::vector<Vertex> vertices = {
+            {{ -0.5f,  0.5f, -0.5f },{}},/* 左上前 */
+            {{ -0.5f, -0.5f, -0.5f },{}},/* 左下前 */
+            {{  0.5f,  0.5f, -0.5f },{}},/* 右上前 */
+            {{  0.5f, -0.5f, -0.5f },{}},/* 右下前 */
+            {{ -0.5f,  0.5f,  0.5f },{}},/* 左上奥 */
+            {{ -0.5f, -0.5f,  0.5f },{}},/* 左下奥 */
+            {{  0.5f,  0.5f,  0.5f },{}},/* 右上奥 */
+            {{  0.5f, -0.5f,  0.5f },{}} /* 右下奥 */ };
+        std::vector<uint16_t> indices = {
+            // 前
+            1,0,2,
+            1,2,3,
+            // 左
+            5,4,0,
+            5,0,1,
+            // 上
+            0,4,6,
+            0,6,2,
+            // 右
+            3,2,6,
+            3,6,7,
+            // 下
+            5,1,3,
+            5,3,7,
+            // 後
+            7,6,4,
+            7,4,5 };
+        for (auto& vertex : vertices) {
+            vertex.normal = vertex.position.Normalized();
+        }
+        box_ = pimpl_->RegisterMesh(vertices, indices);
+    }
 }
 
 void Renderer::StartRendering() {
@@ -822,8 +893,26 @@ void Renderer::Finalize() {
     pimpl_->Finalize();
 }
 
-std::size_t Renderer::RegisterMesh(const std::vector<Vertex>& vertices, const std::vector<std::uint16_t> indices) {
+std::size_t Renderer::RegisterMesh(const std::vector<Vector3>& positions, const std::vector<std::uint16_t> indices) {
+    std::vector<Vertex> vertices;
+    CalcNormals(positions, indices, &vertices);
     return pimpl_->RegisterMesh(vertices, indices);
+}
+
+void Renderer::DrawPlane(const Matrix4x4& world_matrix, const Vector4& color, DrawMode draw_mode) {
+    if (draw_mode == DrawMode::kObject) {
+        pimpl_->AddObjInstance(plane_, world_matrix, color);
+        return;
+    }
+    pimpl_->AddWireFrameInstance(plane_, world_matrix, color);
+}
+
+void Renderer::DrawBox(const Matrix4x4& world_matrix, const Vector4& color, DrawMode draw_mode) {
+    if (draw_mode == DrawMode::kObject) {
+        pimpl_->AddObjInstance(box_, world_matrix, color);
+        return;
+    }
+    pimpl_->AddWireFrameInstance(box_, world_matrix, color);
 }
 
 void Renderer::DrawObject(std::size_t mesh_handle, const Vector3& scale, const Quaternion& rotate, const Vector3& translate, const Vector4& color) {
