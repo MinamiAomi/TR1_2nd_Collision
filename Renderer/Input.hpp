@@ -138,7 +138,7 @@ enum class Keycode : unsigned char {
 
 class Input {
 public:
-	static void Initialize();
+	static void Initialize(HWND hwnd = nullptr);
     static bool IsKeyTriggered(Keycode keycode);
     static bool IsKeyPressed(Keycode keycode);
     static bool IsKeyReleaseed(Keycode keycode);

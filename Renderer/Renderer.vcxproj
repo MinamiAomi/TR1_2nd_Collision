@@ -123,6 +123,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Math\MathUtils.hpp" />
     <ClInclude Include="Renderer.hpp" />
     <ClInclude Include="ShaderUtils.hpp" />
+    <ClInclude Include="Utils.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="object_ps.hlsl">

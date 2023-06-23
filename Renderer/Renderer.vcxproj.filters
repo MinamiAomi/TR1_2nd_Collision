@@ -98,6 +98,9 @@
     <ClInclude Include="Input.hpp">
       <Filter>Header</Filter>
     </ClInclude>
+    <ClInclude Include="Utils.hpp">
+      <Filter>Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="object_vs.hlsl">

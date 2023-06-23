@@ -5,6 +5,7 @@
 #include "Math/MathUtils.hpp"
 #include "Renderer.hpp"
 #include "ShaderUtils.hpp"
+#include "Utils.hpp"
 // 定数
 constexpr uint32_t kSwapChainBufferCount = 2;
 // クライアント領域サイズ
