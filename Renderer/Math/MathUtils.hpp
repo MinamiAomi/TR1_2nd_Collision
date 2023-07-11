@@ -1,8 +1,8 @@
 #pragma once
 
-#include <cmath>
 #include <algorithm>
-
+#include <cmath>
+#include <limits>
 
 namespace Math {
     constexpr float Pi = 3.141592653589793f;
@@ -10,6 +10,8 @@ namespace Math {
     constexpr float HalfPi = Pi * 0.5f;
     constexpr float ToRadian = Pi / 180.0f;
     constexpr float ToDegree = 180.0f / Pi;
+    constexpr float positiveInfinity = std::numeric_limits<float>::max();
+    constexpr float negativeInfinity = std::numeric_limits<float>::min();
 
     inline constexpr float Lerp(float t, float start, float end) {
         return start + t * (end - start);
@@ -35,6 +37,9 @@ public:
     static const Vector2 left;
     static const Vector2 up;
     static const Vector2 down;
+    static const Vector2 positiveInfinity;
+    static const Vector2 negativeInfinity;
+
 #pragma endregion
 #pragma region コンストラクタ
     inline constexpr Vector2() noexcept : x(0.0f), y(0.0f) {}
@@ -48,7 +53,7 @@ public:
     inline constexpr float& operator[](size_t index) noexcept {
         return const_cast<float&>(static_cast<const Vector2&>(*this)[index]);
     }
-  
+
     // inline constexpr explicit operator Vector3() const;
 
     friend inline constexpr Vector2 operator+(const Vector2& rhs) noexcept {
@@ -170,6 +175,8 @@ public:
     static const Vector3 down;
     static const Vector3 forward;
     static const Vector3 back;
+    static const Vector3 positiveInfinity;
+    static const Vector3 negativeInfinity;
 #pragma endregion
 #pragma region コンストラクタ
     inline constexpr Vector3() noexcept : x(0.0f), y(0.0f), z(0.0f) {}

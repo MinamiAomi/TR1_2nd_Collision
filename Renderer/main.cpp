@@ -6,20 +6,29 @@
 #include "Renderer.hpp"
 #include "ShaderUtils.hpp"
 #include "Utils.hpp"
+
+#include "GameObject.hpp"
+
 // 定数
 constexpr uint32_t kSwapChainBufferCount = 2;
 // クライアント領域サイズ
 const uint32_t kClientWidth = 1280;
 const uint32_t kClientHeight = 720;
 
-struct Transform {
-    Vector3 scale;
-    Quaternion rotate;
-    Vector3 translate;
+class Test : public Behavior {
+public:
+    Test(GameObject* g) : Behavior(g) {}
 
-    Matrix4x4 MakeWorldMatrix() {
-        return Matrix4x4::MakeAffineTransform(scale, rotate, translate);
-    }
+    void Initalize() override {}
+    void Update() override {}
+
+};
+
+class Test2 : public Component {
+public:
+    Test2(GameObject* g) : Component(g) {}
+
+
 };
 
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
@@ -27,15 +36,22 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
     Renderer renderer;
     renderer.Initailize(L"RendererTest", 1280, 720);
 
-    Transform transform[6];
+    GameObject obj1;
+    obj1.transform.scale = { 1.0f,1.0f,1.0f };
+    obj1.transform.rotate = Quaternion::identity;
+    obj1.transform.translate = { 2.0f,0.0f,0.0f };
+    obj1.AddComponent<Test>();
+    obj1.AddComponent<Test2>();
+    obj1.GetComponent<Test>();
+    obj1.GetComponent<Test2>();
+    obj1.RemoveComponent<Test>();
+    obj1.RemoveComponent<Test2>();
 
-    transform[0].scale = Vector3::one;
-    transform[0].rotate = Quaternion::identity;
-    transform[0].translate = Vector3::unitX;
-
-    transform[1].scale = Vector3::one;
-    transform[1].rotate = Quaternion::identity;
-    transform[1].translate = { 1.0f,0.0f,-1.0f };
+    GameObject obj2;
+    obj2.transform.scale = { 1.0f,1.0f,1.0f };
+    obj2.transform.rotate = Quaternion::identity;
+    obj2.transform.translate = { 0.0f,1.0f,0.0f };
+    obj2.SetParent(&obj1);
 
     {
         MSG msg{};
@@ -49,13 +65,18 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
             else {
                 renderer.StartRendering();
 
-                renderer.DrawBox(transform[0].MakeWorldMatrix(), { 0.6f,0.6f,0.6f,1.0f }, DrawMode::kObject);
-                renderer.DrawBox(transform[1].MakeWorldMatrix(), { 1.0f,0.0f,1.0f,0.4f }, DrawMode::kObject);
+                obj1.transform.UpdateWorldMatrix();
+                obj2.transform.UpdateWorldMatrix();
+
+                renderer.DrawBox(obj1.transform.GetWorldMatrix(), {0.6f,0.6f,0.6f,1.0f}, DrawMode::kObject);
+                renderer.DrawBox(obj2.transform.GetWorldMatrix(), { 1.0f,0.0f,1.0f,0.4f }, DrawMode::kObject);
 
                 ImGui::SetNextWindowPos({0,0},ImGuiCond_Once);
                 ImGui::SetNextWindowSize({300,100},ImGuiCond_Once);
                 ImGui::Begin("Window");
                 ImGui::End();
+
+                
 
                 renderer.EndRendering();
             }

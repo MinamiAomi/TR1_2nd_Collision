@@ -97,6 +97,8 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Collider.cpp" />
+    <ClCompile Include="Component.cpp" />
     <ClCompile Include="Externals\ImGui\imgui.cpp" />
     <ClCompile Include="Externals\ImGui\imgui_demo.cpp" />
     <ClCompile Include="Externals\ImGui\imgui_draw.cpp" />
@@ -104,13 +106,19 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Externals\ImGui\imgui_impl_win32.cpp" />
     <ClCompile Include="Externals\ImGui\imgui_tables.cpp" />
     <ClCompile Include="Externals\ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Math\MathUtils.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="ShaderUtils.cpp" />
+    <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AABB.hpp" />
+    <ClInclude Include="Collider.hpp" />
+    <ClInclude Include="Component.hpp" />
+    <ClInclude Include="Behavior.hpp" />
     <ClInclude Include="Externals\ImGui\imconfig.h" />
     <ClInclude Include="Externals\ImGui\imgui.h" />
     <ClInclude Include="Externals\ImGui\imgui_impl_dx12.h" />
@@ -119,10 +127,12 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Externals\ImGui\imstb_rectpack.h" />
     <ClInclude Include="Externals\ImGui\imstb_textedit.h" />
     <ClInclude Include="Externals\ImGui\imstb_truetype.h" />
+    <ClInclude Include="GameObject.hpp" />
     <ClInclude Include="Input.hpp" />
     <ClInclude Include="Math\MathUtils.hpp" />
     <ClInclude Include="Renderer.hpp" />
     <ClInclude Include="ShaderUtils.hpp" />
+    <ClInclude Include="Transform.hpp" />
     <ClInclude Include="Utils.hpp" />
   </ItemGroup>
   <ItemGroup>

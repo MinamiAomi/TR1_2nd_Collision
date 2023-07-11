@@ -10,6 +10,8 @@ const Vector2 Vector2::right{ 1.0f,0.0f };
 const Vector2 Vector2::left{ -1.0f,0.0f };
 const Vector2 Vector2::up{ 0.0f,1.0f };
 const Vector2 Vector2::down{ 0.0f,-1.0f };
+const Vector2 Vector2::positiveInfinity{ Math::positiveInfinity, Math::positiveInfinity };
+const Vector2 Vector2::negativeInfinity{ Math::negativeInfinity, Math::negativeInfinity };
 
 Vector2 Vector2::Slerp(float t, const Vector2& start, const Vector2& end) noexcept {
     float startLen = start.Length();
@@ -67,6 +69,8 @@ const Vector3 Vector3::up{ 0.0f, 1.0f, 0.0f };
 const Vector3 Vector3::down{ 0.0f, -1.0f, 0.0f };
 const Vector3 Vector3::forward{ 0.0f, 0.0f, 1.0f };
 const Vector3 Vector3::back{ 0.0f, 0.0f, -1.0f };
+const Vector3 Vector3::positiveInfinity{ Math::positiveInfinity, Math::positiveInfinity, Math::positiveInfinity };
+const Vector3 Vector3::negativeInfinity{ Math::negativeInfinity, Math::negativeInfinity, Math::negativeInfinity };
 
 Vector3 Vector3::Slerp(float t, const Vector3& start, const Vector3& end) noexcept {
     float startLen = start.Length();

@@ -22,6 +22,9 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="System">
+      <UniqueIdentifier>{b6b09d44-3488-46ab-9cd9-e865d5bc2284}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -58,6 +61,18 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Input.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObject.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="Collider.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="Component.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -100,6 +115,24 @@
     </ClInclude>
     <ClInclude Include="Utils.hpp">
       <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="AABB.hpp">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObject.hpp">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Component.hpp">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Collider.hpp">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.hpp">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Behavior.hpp">
+      <Filter>System</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
