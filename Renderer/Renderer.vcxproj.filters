@@ -25,6 +25,9 @@
     <Filter Include="System">
       <UniqueIdentifier>{b6b09d44-3488-46ab-9cd9-e865d5bc2284}</UniqueIdentifier>
     </Filter>
+    <Filter Include="GUI">
+      <UniqueIdentifier>{8e7e6a7e-2565-49ef-9f1c-ddc6464992e3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -72,8 +75,17 @@
     <ClCompile Include="Transform.cpp">
       <Filter>System</Filter>
     </ClCompile>
+    <ClCompile Include="HierarchyView.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
     <ClCompile Include="Component.cpp">
-      <Filter>Source</Filter>
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="InspectorView.cpp">
+      <Filter>GUI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -133,6 +145,21 @@
     </ClInclude>
     <ClInclude Include="Behavior.hpp">
       <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="HierarchyView.hpp">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.hpp">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Object.hpp">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="InspectorView.hpp">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="ViewWindow.hpp">
+      <Filter>GUI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

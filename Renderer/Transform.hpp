@@ -15,6 +15,8 @@ public:
         parent_(nullptr) {
     }
 
+    void ShowUI() override;
+
     Transform* GetParent() { return parent_; }
     const Transform* GetParent() const { return parent_; }
     const Matrix4x4& GetWorldMatrix() const { return worldMatrix_; }

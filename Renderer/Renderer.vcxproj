@@ -107,10 +107,13 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="Externals\ImGui\imgui_tables.cpp" />
     <ClCompile Include="Externals\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="HierarchyView.cpp" />
     <ClCompile Include="Input.cpp" />
+    <ClCompile Include="InspectorView.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Math\MathUtils.cpp" />
     <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Scene.cpp" />
     <ClCompile Include="ShaderUtils.cpp" />
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
@@ -128,12 +131,17 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Externals\ImGui\imstb_textedit.h" />
     <ClInclude Include="Externals\ImGui\imstb_truetype.h" />
     <ClInclude Include="GameObject.hpp" />
+    <ClInclude Include="HierarchyView.hpp" />
+    <ClInclude Include="InspectorView.hpp" />
     <ClInclude Include="Input.hpp" />
     <ClInclude Include="Math\MathUtils.hpp" />
+    <ClInclude Include="Object.hpp" />
     <ClInclude Include="Renderer.hpp" />
+    <ClInclude Include="Scene.hpp" />
     <ClInclude Include="ShaderUtils.hpp" />
     <ClInclude Include="Transform.hpp" />
     <ClInclude Include="Utils.hpp" />
+    <ClInclude Include="ViewWindow.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="object_ps.hlsl">

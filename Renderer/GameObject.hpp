@@ -1,4 +1,5 @@
 #pragma once
+#include "Object.hpp"
 
 #include <memory>
 #include <type_traits>
@@ -9,7 +10,8 @@
 #include "Behavior.hpp"
 #include "Transform.hpp"
 
-class GameObject {
+class GameObject : 
+    public Object {
 private:
     template<class T>
     using ComponentType = std::conditional<std::is_base_of<Behavior, T>::value, Behavior, Component>::type;
@@ -50,8 +52,14 @@ public:
     const std::string& GetTag() const { return tag_; }
     Transform* GetTransform() { return &transform; }
     const Transform* GetTransform() const { return &transform; }
+    GameObject* GetParent() { return parent_; }
+    const GameObject* GetParent() const { return parent_; }
+    std::vector<GameObject*>& GetChildren() { return children_; }
+    const std::vector<GameObject*>& GetChildren() const { return children_; }
 
     Transform transform;
+
+    void ShowUI();
 
 private:
     void AddChild(GameObject* child);

@@ -1,14 +1,17 @@
 #pragma once
+#include "Object.hpp"
 
 #include <string>
 
 class GameObject;
 class Transform;
 
-class Component {
+class Component :
+    public Object {
 public:
     Component(GameObject* const gameObject);
     virtual ~Component() = 0 {}
+    virtual void ShowUI() = 0 {}
 
     const GameObject& GetGameObject() const { return gameObject; }
     GameObject& GetGameObject() { return gameObject; }

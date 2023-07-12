@@ -1,5 +1,7 @@
 #include "GameObject.hpp"
 
+#include "Externals/ImGui/imgui.h"
+
 GameObject::GameObject() :
     parent_(nullptr),
     transform(this),
@@ -12,6 +14,25 @@ void GameObject::SetParent(GameObject* parent) {
     }
     parent_ = parent;
     parent_->AddChild(this);
+}
+
+void GameObject::ShowUI() {
+    char buf[256] = {};
+    GetName().copy(buf, 256);
+    if (ImGui::InputText(GetName().c_str(), buf, 256), ImGuiInputTextFlags_EnterReturnsTrue) {
+        SetName(buf);
+    }
+
+    ImGui::Separator();
+    transform.ShowUI();
+    for (auto& component : components_) {
+        ImGui::Separator();
+        component->ShowUI();
+    }
+    for (auto& behavior : behaviors_) {
+        ImGui::Separator();
+        behavior->ShowUI();
+    }
 }
 
 void GameObject::AddChild(GameObject* child) {
