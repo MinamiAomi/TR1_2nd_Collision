@@ -9,29 +9,47 @@ GameObject::GameObject() :
 }
 
 void GameObject::SetParent(GameObject* parent) {
+    if (parent) {
+        GameObject* p = parent;
+        while (p->parent_) {
+            p = p->parent_;
+            if (p == this) {
+                parent->parent_->RemoveChild(parent);
+                parent->parent_ = parent_;
+                parent_ = parent;
+                break;
+            }
+        }
+    }
+
     if (parent_) {
         parent_->RemoveChild(this);
     }
     parent_ = parent;
-    parent_->AddChild(this);
+    if (parent_) {
+        parent_->AddChild(this);
+    }
 }
 
 void GameObject::ShowUI() {
+    ImGui::Checkbox("Active", &isActive_);
     char buf[256] = {};
     GetName().copy(buf, 256);
-    if (ImGui::InputText(GetName().c_str(), buf, 256), ImGuiInputTextFlags_EnterReturnsTrue) {
+    ImGui::SameLine();
+    if (ImGui::InputText("Name", buf, 256, ImGuiInputTextFlags_EnterReturnsTrue)) {
         SetName(buf);
     }
 
     ImGui::Separator();
     transform.ShowUI();
+    ImGui::Separator();
     for (auto& component : components_) {
-        ImGui::Separator();
         component->ShowUI();
+        ImGui::Separator();
     }
     for (auto& behavior : behaviors_) {
-        ImGui::Separator();
         behavior->ShowUI();
+        ImGui::Separator();
     }
 }
 
@@ -41,10 +59,14 @@ void GameObject::AddChild(GameObject* child) {
 }
 
 void GameObject::RemoveChild(GameObject* child) {
-    auto iter = std::find(children_.begin(), children_.end(), child);
-    std::swap(*iter, children_.back());
-    children_.pop_back();
-    child->transform.parent_ = nullptr;
+    if (child) {
+        auto iter = std::find(children_.begin(), children_.end(), child);
+        if (iter != children_.end()) {
+            std::swap(*iter, children_.back());
+            children_.pop_back();
+            child->transform.parent_ = nullptr;
+        }
+    }
 }
 
 template<>

@@ -8,7 +8,7 @@ class HierarchyView :
     public ViewWindow {
 public:
 
-    HierarchyView() : scene_(nullptr), inspectorView_(nullptr) {}
+    HierarchyView();
 
     void Show() override;
 
@@ -21,7 +21,11 @@ public:
 
 private:
     void DisplayGameObject(GameObject* gameObject);
+    void DragGameObject(GameObject* gameObject);
+    void DropGameObject(GameObject* parent);
 
     Scene* scene_;
     InspectorView* inspectorView_;
+    GameObject* dropDest_;
+    GameObject* dragSrc_;
 };
