@@ -20,22 +20,6 @@ constexpr uint32_t kSwapChainBufferCount = 2;
 const uint32_t kClientWidth = 1280;
 const uint32_t kClientHeight = 720;
 
-class Test : public Behavior {
-public:
-    Test(GameObject* g) : Behavior(g) {}
-
-    void Initalize() override {}
-    void Update() override {}
-
-};
-
-class Test2 : public Component {
-public:
-    Test2(GameObject* g) : Component(g) {}
-
-
-};
-
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
     Renderer renderer;
@@ -72,6 +56,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
             }
             else {
                 renderer.StartRendering();
+
+               
 
                 /*    obj1.transform.UpdateWorldMatrix();
                     obj2.transform.UpdateWorldMatrix();
