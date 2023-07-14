@@ -13,6 +13,10 @@ const Vector2 Vector2::down{ 0.0f,-1.0f };
 const Vector2 Vector2::positiveInfinity{ Math::positiveInfinity, Math::positiveInfinity };
 const Vector2 Vector2::negativeInfinity{ Math::negativeInfinity, Math::negativeInfinity };
 
+Vector2::operator Vector3() const {
+    return { x, y, 0.0f };
+}
+
 Vector2 Vector2::Slerp(float t, const Vector2& start, const Vector2& end) noexcept {
     float startLen = start.Length();
     float endLen = end.Length();

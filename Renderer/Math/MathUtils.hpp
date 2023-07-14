@@ -54,7 +54,7 @@ public:
         return const_cast<float&>(static_cast<const Vector2&>(*this)[index]);
     }
 
-    // inline constexpr explicit operator Vector3() const;
+    explicit operator Vector3() const;
 
     friend inline constexpr Vector2 operator+(const Vector2& rhs) noexcept {
         return rhs;
@@ -76,6 +76,12 @@ public:
     }
     friend inline constexpr Vector2 operator/(const Vector2& lhs, float rhs) noexcept {
         return lhs * (1.0f / rhs);
+    }
+    friend inline constexpr float Dot(const Vector2& lhs, const Vector2& rhs) noexcept {
+        return Vector2::Dot(lhs, rhs);
+    }
+    friend inline constexpr float Cross(const Vector2& lhs, const Vector2& rhs) noexcept {
+        return Vector2::Cross(lhs, rhs);
     }
     friend inline constexpr Vector2& operator+=(Vector2& lhs, const Vector2& rhs) noexcept {
         lhs = lhs + rhs;
@@ -127,6 +133,9 @@ public:
     static inline constexpr float Cross(const Vector2& lhs, const Vector2& rhs) noexcept {
         return lhs.x * rhs.y - lhs.y * rhs.x;
     }
+    static inline constexpr Vector2 Triple(const Vector2& a, const Vector2& b, const Vector2& c) {
+        return b * Dot(a, c) - a * Dot(b, c);
+    }
     static inline constexpr Vector2 Perpendicular(const Vector2& direction) noexcept {
         return { -direction.y, direction.x };
     }
@@ -134,10 +143,10 @@ public:
         return { lhs.x * rhs.x, lhs.y * rhs.y };
     }
     static inline constexpr Vector2 Project(const Vector2& base, const Vector2& direction) noexcept {
-        return Dot(base, direction.Normalized()) * direction.Normalized();
+        return Dot(base, direction) * direction;
     }
     static inline constexpr Vector2 Reflecte(const Vector2& direction, const Vector2& normal) noexcept {
-        return Dot(normal.Normalized(), -direction) * 2.0f * normal.Normalized() + direction;
+        return Dot(normal, -direction) * 2.0f * normal + direction;
     }
     static inline constexpr Vector2 Min(const Vector2& lhs, const Vector2& rhs) noexcept {
         return { std::min(lhs.x, rhs.x), std::min(lhs.y, rhs.y) };
@@ -192,6 +201,10 @@ public:
         return const_cast<float&>(static_cast<const Vector3&>(*this)[index]);
     }
 
+    inline explicit operator Vector2() const {
+        return { x,y };
+    }
+
     friend inline constexpr Vector3 operator+(const Vector3& rhs) noexcept {
         return rhs;
     }
@@ -228,6 +241,12 @@ public:
     friend inline constexpr Vector3& operator/=(Vector3& lhs, float rhs) noexcept {
         lhs = lhs / rhs;
         return lhs;
+    }
+    friend inline constexpr float Dot(const Vector3& lhs, const Vector3& rhs) noexcept {
+        return Vector3::Dot(lhs, rhs);
+    }
+    friend inline constexpr Vector3 Cross(const Vector3& lhs, const Vector3& rhs) noexcept {
+        return Vector3::Cross(lhs, rhs);
     }
     friend inline constexpr bool operator==(const Vector3& lhs, const Vector3& rhs) noexcept {
         return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
@@ -292,13 +311,13 @@ public:
         return { lhs.x * rhs.x , lhs.y + rhs.y, lhs.z * rhs.z };
     }
     static inline constexpr Vector3 Project(const Vector3& base, const Vector3& direction) noexcept {
-        return Dot(base, direction.Normalized()) * direction.Normalized();
+        return Dot(base, direction) * direction;
     }
     static inline constexpr Vector3 ProjectOnPlane(const Vector3& base, const Vector3& planeNormal) noexcept {
-        return base - planeNormal.Normalized() * Dot(base, planeNormal.Normalized());
+        return base - planeNormal * Dot(base, planeNormal);
     }
     static inline constexpr Vector3 Reflecte(const Vector3& direction, const Vector3& normal) noexcept {
-        return Dot(normal.Normalized(), -direction) * 2.0f * normal.Normalized() + direction;
+        return Dot(normal, -direction) * 2.0f * normal + direction;
     }
     static inline constexpr Vector3 Min(const Vector3& lhs, const Vector3& rhs) noexcept {
         return { std::min(lhs.x,rhs.x), std::min(lhs.y,rhs.y), std::min(lhs.z,rhs.z) };
@@ -382,6 +401,9 @@ public:
         lhs = lhs / rhs;
         return lhs;
     }
+    friend inline constexpr float Dot(const Vector4& lhs, const Vector4& rhs) noexcept {
+        return Vector4::Dot(lhs, rhs);
+    }
     friend inline constexpr bool operator==(const Vector4& lhs, const Vector4& rhs) noexcept {
         return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z && lhs.w == rhs.w;
     }
@@ -416,7 +438,7 @@ public:
         return { lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z, lhs.z * rhs.z };
     }
     static inline Vector4 Project(const Vector4& base, const Vector4& direction) noexcept {
-        return Dot(base, direction.Normalized()) * direction.Normalized();
+        return Dot(base, direction) * direction;
     }
     static inline constexpr Vector4 Min(const Vector4& lhs, const Vector4& rhs) noexcept {
         return { std::min(lhs.x, rhs.x), std::min(lhs.y, rhs.y), std::min(lhs.z, rhs.z), std::min(lhs.w, rhs.w) };
@@ -505,7 +527,17 @@ public:
         return Quaternion{ lhs * rhs.x, lhs * rhs.y, lhs * rhs.z, lhs * rhs.w };
     }
     friend inline constexpr Vector3 operator*(const Quaternion& lhs, const Vector3& rhs) noexcept {
-        return rhs + 2.0f * Vector3::Cross({ lhs.x, lhs.y, lhs.z }, Vector3::Cross({ lhs.x, lhs.y, lhs.z }, rhs) + lhs.w * rhs);
+        float x = lhs.w * rhs.x + lhs.y * rhs.z - lhs.z * rhs.y;
+        float y = lhs.w * rhs.y + lhs.z * rhs.x - lhs.x * rhs.z;
+        float z = lhs.w * rhs.z + lhs.x * rhs.y - lhs.y * rhs.x;
+        float w = -lhs.x * rhs.x - lhs.y * rhs.y - lhs.z * rhs.z;
+
+        return {
+            x * lhs.w + w * -lhs.x + y * -lhs.z - z * -lhs.y,
+            y * lhs.w + w * -lhs.y + z * -lhs.x - x * -lhs.z,
+            z * lhs.w + w * -lhs.z + x * -lhs.y - y * -lhs.x,
+        };
+        // return rhs + 2.0f * Vector3::Cross({ lhs.x, lhs.y, lhs.z }, Vector3::Cross({ lhs.x, lhs.y, lhs.z }, rhs) + lhs.w * rhs);
     }
     friend inline constexpr Quaternion operator*(const Quaternion& lhs, const Quaternion& rhs) noexcept {
         return Quaternion{

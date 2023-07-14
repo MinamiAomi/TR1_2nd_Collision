@@ -1,5 +1,7 @@
 #include <Windows.h>
 
+#include <stack>
+
 #include "Externals/ImGui/imgui.h"
 
 #include "Math/MathUtils.hpp"
@@ -28,17 +30,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
     Scene scene;
     scene.SetName("Scene");
-    auto& obj1 = scene.AddGameObject("obj1");
-    auto& obj2 = scene.AddGameObject("obj2");
-    auto& obj3 = scene.AddGameObject("obj3");
-    scene.AddGameObject("obj4");
-    scene.AddGameObject("obj5");
-    scene.AddGameObject("obj6");
-    scene.AddGameObject("obj7");
-    scene.AddGameObject("obj8");
-    scene.AddGameObject("obj9");
-    obj3.SetParent(&obj1);
-    obj2;
+    for (size_t i = 0; i < 10; ++i) {
+        scene.AddGameObject(("obj" + std::to_string(i)).c_str());
+    }
+
+    scene.GetGameObject(0).transform.scale = { 10.0f,1.0f,10.0f };
+    scene.GetGameObject(0).transform.translate = { 0.0f,-1.0f,0.0f };
+    
 
     HierarchyView hierarchyView;
     hierarchyView.SetScene(&scene);
@@ -57,13 +55,21 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
             else {
                 renderer.StartRendering();
 
-               
-
-                /*    obj1.transform.UpdateWorldMatrix();
-                    obj2.transform.UpdateWorldMatrix();
-
-                    renderer.DrawBox(obj1.transform.GetWorldMatrix(), {0.6f,0.6f,0.6f,1.0f}, DrawMode::kObject);
-                    renderer.DrawBox(obj2.transform.GetWorldMatrix(), { 1.0f,0.0f,1.0f,0.4f }, DrawMode::kObject);*/
+                for (auto& iter : scene.GetGameObjects()) {
+                    std::stack<GameObject*> stack;
+                    stack.push(iter.get());
+                    while (!stack.empty()) {
+                        GameObject* o = stack.top();
+                        stack.pop();
+                        o->transform.UpdateWorldMatrix();
+                        for (auto c : o->GetChildren()) {
+                            stack.push(c);
+                        }
+                    }
+                }
+                for (auto& o : scene.GetGameObjects()) {
+                    renderer.DrawBox(o->transform.GetWorldMatrix(), { 1.0f,1.0f,1.0f,1.0f }, DrawMode::kObject);
+                }
 
                 ImGui::SetNextWindowPos({ 0,0 }, ImGuiCond_Once);
                 ImGui::SetNextWindowSize({ 300,100 }, ImGuiCond_Once);
