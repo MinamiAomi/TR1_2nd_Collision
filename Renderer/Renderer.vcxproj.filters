@@ -87,6 +87,9 @@
     <ClCompile Include="InspectorView.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
+    <ClCompile Include="Collision.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -160,6 +163,9 @@
     </ClInclude>
     <ClInclude Include="ViewWindow.hpp">
       <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Collision.h">
+      <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

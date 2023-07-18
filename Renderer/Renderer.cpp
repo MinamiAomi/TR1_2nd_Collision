@@ -22,6 +22,8 @@
 #pragma comment(lib,"dxgi.lib")
 #pragma comment(lib,"dxguid.lib")
 
+//#include "Input.hpp"
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace {
@@ -146,6 +148,8 @@ public:
                 wc.hInstance,			// インスタンスハンドル
                 nullptr);				// オプション
         }
+
+        //Input::Initialize(hwnd_);
         // ファクトリとデバイス
         {
 #ifdef _DEBUG	
@@ -569,7 +573,7 @@ public:
         assert(SUCCEEDED(hr));
         hr = commandList_->Reset(commandAllocators_[backBufferIndex].Get(), nullptr);
         assert(SUCCEEDED(hr));
-        
+
         ImGui_ImplWin32_NewFrame();
         ImGui_ImplDX12_NewFrame();
         ImGui::NewFrame();
@@ -747,6 +751,20 @@ public:
         objectCounter_ = 0;
     }
 
+    void UpdateCamera(const Vector3& cameraPos, const Vector3& cameraRot) {
+        auto scene = sceneBuffers_[swapChain_->GetCurrentBackBufferIndex()].GetMappedPtr<SceneConstant>();
+
+        Matrix4x4 view = Matrix4x4::MakeAffineTransform(Vector3::one, cameraRot, cameraPos).Inverse();
+        scene->viewProjectionMatrix = view * projectionMatrix_;
+    }
+
+    void UpdateLight(const Vector3& dir, const Vector4& color, float intensity) {
+        auto scene = sceneBuffers_[swapChain_->GetCurrentBackBufferIndex()].GetMappedPtr<SceneConstant>();
+        scene->lightDirection = dir;
+        scene->lightColor = color;
+        scene->lightIntensity = intensity;
+    }
+
 private:
     ComPtr<ID3D12Resource> CreateBufferResource(size_t size_in_bytes) {
         // アップロードヒープ
@@ -845,39 +863,167 @@ void Renderer::Initailize(const std::wstring& window_title, const std::uint32_t 
         plane_ = pimpl_->RegisterMesh(vertices, indices);
     }
     {
-        std::vector<Vertex> vertices = {
-            {{ -0.5f,  0.5f, -0.5f },{}},/* 左上前 */
-            {{ -0.5f, -0.5f, -0.5f },{}},/* 左下前 */
-            {{  0.5f,  0.5f, -0.5f },{}},/* 右上前 */
-            {{  0.5f, -0.5f, -0.5f },{}},/* 右下前 */
-            {{ -0.5f,  0.5f,  0.5f },{}},/* 左上奥 */
-            {{ -0.5f, -0.5f,  0.5f },{}},/* 左下奥 */
-            {{  0.5f,  0.5f,  0.5f },{}},/* 右上奥 */
-            {{  0.5f, -0.5f,  0.5f },{}} /* 右下奥 */ };
-        std::vector<uint16_t> indices = {
-            // 前
-            1,0,2,
-            1,2,3,
-            // 左
-            5,4,0,
-            5,0,1,
-            // 上
-            0,4,6,
-            0,6,2,
-            // 右
-            3,2,6,
-            3,6,7,
-            // 下
-            5,1,3,
-            5,3,7,
-            // 後
-            7,6,4,
-            7,4,5 };
-        for (auto& vertex : vertices) {
-            vertex.normal = vertex.position.Normalized();
+        const int kSurfaceCount = 6;
+        const int kVertexCount = 24;
+        const int kIndexCount = 36;
+        std::vector<Vertex> vertices(kVertexCount);
+        std::vector<uint16_t> indices(kIndexCount);
+        {
+            enum {
+                LTN,    // 左上前
+                LBN,    // 左下前
+                RTN,    // 右上前
+                RBN,    // 右下前
+                LTF,    // 左上奥
+                LBF,    // 左下奥
+                RTF,    // 右上奥
+                RBF,    // 右下奥
+            };
+
+            Vector3 position[8] = {
+                { -0.5f,  0.5f, -0.5f }, // 左上前
+                { -0.5f, -0.5f, -0.5f }, // 左下前
+                {  0.5f,  0.5f, -0.5f }, // 右上前
+                {  0.5f, -0.5f, -0.5f }, // 右下前
+
+                { -0.5f,  0.5f,  0.5f }, // 左上奥
+                { -0.5f, -0.5f,  0.5f }, // 左下奥
+                {  0.5f,  0.5f,  0.5f }, // 右上奥
+                {  0.5f, -0.5f,  0.5f }, // 右下奥 
+            };
+
+            // 前面
+            vertices[0].position = position[LTN];
+            vertices[1].position = position[LBN];
+            vertices[2].position = position[RTN];
+            vertices[3].position = position[RBN];
+            // 後面
+            vertices[4].position = position[RTF];
+            vertices[5].position = position[RBF];
+            vertices[6].position = position[LTF];
+            vertices[7].position = position[LBF];
+            // 右面
+            vertices[8].position = position[RTN];
+            vertices[9].position = position[RBN];
+            vertices[10].position = position[RTF];
+            vertices[11].position = position[RBF];
+            // 左面
+            vertices[12].position = position[LTF];
+            vertices[13].position = position[LBF];
+            vertices[14].position = position[LTN];
+            vertices[15].position = position[LBN];
+            // 上面
+            vertices[16].position = position[LTF];
+            vertices[17].position = position[LTN];
+            vertices[18].position = position[RTF];
+            vertices[19].position = position[RTN];
+            // 下面
+            vertices[20].position = position[LBN];
+            vertices[21].position = position[LBF];
+            vertices[22].position = position[RBN];
+            vertices[23].position = position[RBF];
+        }
+
+        // 法線
+        {
+            Vector3 normal[6] = {
+                -Vector3::unitZ, // 前面
+                 Vector3::unitZ, // 後面
+                 Vector3::unitX, // 右面
+                -Vector3::unitX, // 左面
+                 Vector3::unitY, // 上面
+                -Vector3::unitY, // 下面
+            };
+
+            for (size_t i = 0; i < kSurfaceCount; i++) {
+                size_t j = i * 4;
+                vertices[j + 0].normal = normal[i];
+                vertices[j + 1].normal = normal[i];
+                vertices[j + 2].normal = normal[i];
+                vertices[j + 3].normal = normal[i];
+            }
+        }
+        {
+            uint16_t i = 0;
+            for (uint16_t j = 0; j < kSurfaceCount; j++) {
+                uint16_t k = j * 4;
+
+                indices[i++] = k + 1;
+                indices[i++] = k;
+                indices[i++] = k + 2;
+                indices[i++] = k + 1;
+                indices[i++] = k + 2;
+                indices[i++] = k + 3;
+            }
         }
         box_ = pimpl_->RegisterMesh(vertices, indices);
     }
+
+    {
+        // 球を作成
+        std::vector<Vertex> vertices;
+        std::vector<uint16_t> indices;
+        {
+            const int32_t kSubdivision = 16;
+
+            const float kLonEvery = Math::TwoPi / float(kSubdivision);
+            const float kLatEvery = Math::Pi / float(kSubdivision);
+            const size_t kLatVertexCount = size_t(kSubdivision + 1);
+            const size_t kLonVertexCount = size_t(kSubdivision + 1);
+            const size_t kVertexCount = kLonVertexCount * kLatVertexCount;
+
+            vertices.resize(kVertexCount);
+
+            auto CalcPosition = [](float lat, float lon) {
+                return Vector3{
+                    { std::cos(lat) * std::cos(lon) },
+                    { std::sin(lat) },
+                    { std::cos(lat) * std::sin(lon) }
+                };
+            };
+
+
+
+            for (size_t latIndex = 0; latIndex < kLonVertexCount; ++latIndex) {
+                float lat = -Math::HalfPi + kLatEvery * latIndex;
+
+                for (size_t lonIndex = 0; lonIndex < kLatVertexCount; ++lonIndex) {
+                    float lon = lonIndex * kLonEvery;
+
+                    size_t vertexIndex = latIndex * kLatVertexCount + lonIndex;
+                    vertices[vertexIndex].position = CalcPosition(lat, lon);
+                    vertices[vertexIndex].normal = static_cast<Vector3>(vertices[vertexIndex].position);
+                }
+            }
+
+            const size_t kIndexCount = size_t(kSubdivision * kSubdivision) * 6;
+            indices.resize(kIndexCount);
+
+            for (uint16_t i = 0; i < kSubdivision; ++i) {
+                uint16_t y0 = i * kLatVertexCount;
+                uint16_t y1 = (i + 1) * uint16_t(kLatVertexCount);
+
+                for (uint16_t j = 0; j < kSubdivision; ++j) {
+                    uint16_t index0 = y0 + j;
+                    uint16_t index1 = y1 + j;
+                    uint16_t index2 = y0 + j + 1;
+                    uint16_t index3 = y1 + j + 1;
+
+                    uint16_t indexIndex = (i * kSubdivision + j) * 6;
+                    indices[indexIndex++] = index0;
+                    indices[indexIndex++] = index1;
+                    indices[indexIndex++] = index2;
+                    indices[indexIndex++] = index1;
+                    indices[indexIndex++] = index3;
+                    indices[indexIndex++] = index2;
+                }
+            }
+        }
+        sphere_ = pimpl_->RegisterMesh(vertices, indices);
+    }
+
+
+
 }
 
 void Renderer::StartRendering() {
@@ -915,7 +1061,23 @@ void Renderer::DrawBox(const Matrix4x4& world_matrix, const Vector4& color, Draw
     pimpl_->AddWireFrameInstance(box_, world_matrix, color);
 }
 
+void Renderer::DrawSphere(const Matrix4x4& world_matrix, const Vector4& color, DrawMode draw_mode) {
+    if (draw_mode == DrawMode::kObject) {
+        pimpl_->AddObjInstance(sphere_, world_matrix, color);
+        return;
+    }
+    pimpl_->AddWireFrameInstance(sphere_, world_matrix, color);
+}
+
 void Renderer::DrawObject(std::size_t mesh_handle, const Vector3& scale, const Quaternion& rotate, const Vector3& translate, const Vector4& color) {
     pimpl_->AddObjInstance(mesh_handle, Matrix4x4::MakeAffineTransform(scale, rotate, translate), color);
     // pimpl_->AddLineInstance(mesh_handle, Matrix4x4::MakeAffineTransform(scale, rotate, translate), color);
+}
+
+void Renderer::SetCamera(const Vector3& pos, const Vector3& rot) {
+    pimpl_->UpdateCamera(pos, rot);
+}
+
+void Renderer::SetLight(const Vector3& direction, const Vector4& color, float intensity) {
+    pimpl_->UpdateLight(direction, color, intensity);
 }

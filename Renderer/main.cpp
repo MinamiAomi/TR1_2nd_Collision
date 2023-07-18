@@ -9,12 +9,7 @@
 #include "ShaderUtils.hpp"
 #include "Utils.hpp"
 
-#include "GameObject.hpp"
-
-#include "Scene.hpp"
-
-#include "HierarchyView.hpp"
-#include "InspectorView.hpp"
+#include "Input.hpp"
 
 // 定数
 constexpr uint32_t kSwapChainBufferCount = 2;
@@ -22,26 +17,64 @@ constexpr uint32_t kSwapChainBufferCount = 2;
 const uint32_t kClientWidth = 1280;
 const uint32_t kClientHeight = 720;
 
+struct CollisionObject {
+    Vector3 translate;
+    Quaternion rotate;
+    Vector3 scale{ 1,1,1 };
+    Matrix4x4 matrix;
+
+    void UpdateMatrix();
+};
+
+struct Camera {
+    Vector3 position = { 0.0f,1.0f,-6.0f };
+    Vector3 rotate = { 0,0,0 };
+    void Update() {
+        if (Input::IsMousePressed(MouseButton::Right)) {
+            constexpr float rotSpeed = 1.0f * Math::ToRadian;
+            rotate.x += rotSpeed * Input::GetMouseMove().y * 0.1f;
+            rotate.y += rotSpeed * Input::GetMouseMove().x * 0.1f;
+        }
+        else if (Input::IsMousePressed(MouseButton::Mid)) {
+            Matrix4x4 rotMat = Matrix4x4::MakeRotationXYZ(rotate);
+            Vector3 cameraX = rotMat.GetXAxis() * Input::GetMouseMove().x * -0.01f;
+            Vector3 cameraY = rotMat.GetYAxis() * Input::GetMouseMove().y * 0.01f;
+            position += cameraX + cameraY;
+        }
+        else if (Input::GetWheel()) {
+            Matrix4x4 rotMat = Matrix4x4::MakeRotationXYZ(rotate);
+            Vector3 cameraZ = rotMat.GetZAxis() * (Input::GetWheel() / 120 * 0.5f);
+            position += cameraZ;
+        }
+
+    }
+};
+struct DirectionalLight {
+    Vector3 direction{1,0,0};
+    Vector4 color{1,1,1,1};
+    float intensity{1};
+};
+
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
+
 
     Renderer renderer;
     renderer.Initailize(L"RendererTest", 1280, 720);
+    Input::Initialize();
 
 
-    Scene scene;
-    scene.SetName("Scene");
-    for (size_t i = 0; i < 10; ++i) {
-        scene.AddGameObject(("obj" + std::to_string(i)).c_str());
-    }
+    CollisionObject obj1;
+    obj1.translate = { 1,0,0 };
 
-    scene.GetGameObject(0).transform.scale = { 10.0f,1.0f,10.0f };
-    scene.GetGameObject(0).transform.translate = { 0.0f,-1.0f,0.0f };
-    
+    CollisionObject obj2;
+    obj2.translate = { -1,0,0 };
 
-    HierarchyView hierarchyView;
-    hierarchyView.SetScene(&scene);
-    InspectorView inspectorView;
-    hierarchyView.SetInspectorView(&inspectorView);
+
+    Camera camera;
+    DirectionalLight light;
+
+    bool mouse = false;
+    bool key = false;
 
     {
         MSG msg{};
@@ -53,37 +86,36 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
                 DispatchMessage(&msg);
             }
             else {
+                Input::Update();
                 renderer.StartRendering();
 
-                for (auto& iter : scene.GetGameObjects()) {
-                    std::stack<GameObject*> stack;
-                    stack.push(iter.get());
-                    while (!stack.empty()) {
-                        GameObject* o = stack.top();
-                        stack.pop();
-                        o->transform.UpdateWorldMatrix();
-                        for (auto c : o->GetChildren()) {
-                            stack.push(c);
-                        }
-                    }
-                }
-                for (auto& o : scene.GetGameObjects()) {
-                    renderer.DrawBox(o->transform.GetWorldMatrix(), { 1.0f,1.0f,1.0f,1.0f }, DrawMode::kObject);
-                }
-
-                ImGui::SetNextWindowPos({ 0,0 }, ImGuiCond_Once);
-                ImGui::SetNextWindowSize({ 300,100 }, ImGuiCond_Once);
                 ImGui::Begin("Window");
-                bool is = hierarchyView.IsVisible();
-                ImGui::Checkbox("HierarchyView", &is);
-                hierarchyView.SetIsVisible(is);
-                is = inspectorView.IsVisible();
-                ImGui::Checkbox("InspectorView", &is);
-                inspectorView.SetIsVisible(is);
+                ImGui::DragFloat3("Direction", &light.direction.x, 0.01f);
+                light.direction = light.direction.Normalized();
+                ImGui::ColorEdit4("color", &light.color.x);
+                ImGui::DragFloat("intensity", &light.intensity, 0.01f);
+
+
+
                 ImGui::End();
 
-                hierarchyView.Show();
-                inspectorView.Show();
+                
+                
+                
+                obj1.UpdateMatrix();
+                obj2.UpdateMatrix();
+
+                
+                
+                
+                camera.Update();
+                renderer.SetCamera(camera.position, camera.rotate);
+                renderer.SetLight(light.direction, light.color, light.intensity);
+
+
+
+                renderer.DrawBox(obj1.matrix, mouse ? Vector4{1, 0, 0, 1} : Vector4::one, DrawMode::kObject);
+                renderer.DrawSphere(obj2.matrix, key ? Vector4{ 1, 0, 0, 1 } : Vector4::one, DrawMode::kObject);
 
                 renderer.EndRendering();
             }
@@ -93,4 +125,8 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
     renderer.Finalize();
 
     return 0;
+}
+
+void CollisionObject::UpdateMatrix() {
+    matrix = Matrix4x4::MakeAffineTransform(scale, rotate, translate);
 }

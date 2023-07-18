@@ -32,6 +32,9 @@ public:
     
     void DrawObject(std::size_t mesh_handle, const Vector3& scale, const Quaternion& rotate, const Vector3& translate, const Vector4& color);
 
+    void SetCamera(const Vector3& pos, const Vector3& rot);
+    void SetLight(const Vector3& direction, const Vector4& color, float intensity);
+
 private:
     Renderer(const Renderer&) = delete;
     const Renderer& operator=(const Renderer&) = delete;
@@ -44,7 +47,7 @@ private:
 
     class Impl; Impl* const pimpl_;
 
-    std::size_t plane_;
-    std::size_t box_;
-    std::size_t sphere_;
+    std::size_t plane_ = 0;
+    std::size_t box_ = 0;
+    std::size_t sphere_ = 0;
 };
