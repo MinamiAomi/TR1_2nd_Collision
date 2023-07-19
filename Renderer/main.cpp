@@ -50,13 +50,15 @@ struct Camera {
     }
 };
 struct DirectionalLight {
-    Vector3 direction{1,0,0};
-    Vector4 color{1,1,1,1};
-    float intensity{1};
+    Vector3 direction{ 1,0,0 };
+    Vector4 color{ 1,1,1,1 };
+    float intensity{ 1 };
 };
+
 
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
+    std::srand((unsigned int)std::time(nullptr));
 
     Renderer renderer;
     renderer.Initailize(L"RendererTest", 1280, 720);
@@ -73,8 +75,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
     Camera camera;
     DirectionalLight light;
 
-    bool mouse = false;
-    bool key = false;
+
+
+
 
     {
         MSG msg{};
@@ -99,23 +102,23 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
                 ImGui::End();
 
-                
-                
-                
+
+
+
                 obj1.UpdateMatrix();
                 obj2.UpdateMatrix();
 
-                
-                
-                
+
+
+
                 camera.Update();
                 renderer.SetCamera(camera.position, camera.rotate);
                 renderer.SetLight(light.direction, light.color, light.intensity);
 
 
 
-                renderer.DrawBox(obj1.matrix, mouse ? Vector4{1, 0, 0, 1} : Vector4::one, DrawMode::kObject);
-                renderer.DrawSphere(obj2.matrix, key ? Vector4{ 1, 0, 0, 1 } : Vector4::one, DrawMode::kObject);
+                renderer.DrawBox(obj1.matrix, Vector4::one, DrawMode::kObject);
+                renderer.DrawSphere(obj2.matrix, Vector4::one, DrawMode::kObject);
 
                 renderer.EndRendering();
             }

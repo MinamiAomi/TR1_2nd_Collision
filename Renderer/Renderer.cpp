@@ -466,7 +466,7 @@ public:
 
             // ラスタライザステート
             D3D12_RASTERIZER_DESC rasterizerDesc{};
-            rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
+            rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
             rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
 
             ShaderManager shader_manager;

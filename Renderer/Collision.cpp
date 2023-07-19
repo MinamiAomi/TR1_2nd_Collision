@@ -97,11 +97,61 @@ namespace {
         return false;
     }
 
+    bool SameDirectionCross(const Vector3& lhs, const Vector3& rhs, const Vector3& direction, Vector3& vector) {
+        Vector3 cross = Cross(lhs, rhs);
+        float dot = Dot(cross, direction);
+        if (dot == 0.0f) { return true; }
+        if (dot < 0.0f) { vector = -cross; }
+        else { vector = cross; }
+        return false;
+    }
+
+    bool NearestSimplex(std::vector<Vector3>& simplex, Vector3& direction) {
+        if (simplex.size() == 2) {
+            Vector3 ab = simplex[1] - simplex[0];
+            Vector3 ao = -simplex[0];
+            direction = Cross(Cross(ab, ao), ab);
+            if (direction == Vector3::zero) { return true; }
+            return false;
+        }
+        else if (simplex.size() == 3) {
+            Vector3 ab = simplex[1] - simplex[0];
+            Vector3 ac = simplex[2] - simplex[0];
+            Vector3 ao = -simplex[0];
+
+            return SameDirectionCross(ab, ac, ao, direction);
+        }
+        else if (simplex.size() == 4) {
+            Vector3 ab = simplex[1] - simplex[0];
+            Vector3 ac = simplex[2] - simplex[0];
+            Vector3 ad = simplex[3] - simplex[0];
+            Vector3 ao = -simplex[0];
+
+            if (!SameDirectionCross(ab, ac, ao, direction)) {
+                if (Dot(direction, ao) < 0) {
+                    simplex = { simplex[0], simplex[1],simplex[2] };
+                    return false;
+                }
+            }
+
+            SameDirectionCross(ac, ad, ao);
+            Vector3 adb = SameDirectionCross(ad, ab, ao);
+
+
+
+
+            return true;
+        }
+        return false;
+    }
+
 }
 
 bool GJK(const Collider& collider1, const Collider& collider2, GJKInfo* gjkInfo) {
     Vector3 direction = Vector3::unitX;
     Vector3 support = Support(collider1, collider2, direction);
+
+    if (support == Vector3::zero) { return false; }
 
     std::vector<Vector3> simplex;
     simplex.emplace_back(support);
