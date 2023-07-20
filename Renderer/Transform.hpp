@@ -1,13 +1,10 @@
 #pragma once
-#include "Component.hpp"
 
 #include "Math/MathUtils.hpp"
 
-class Transform : 
-    public Component{
+class Transform {
 public:
-    Transform(GameObject* const gameObject) :
-        Component(gameObject),
+    Transform() :
         scale(Vector3::one),
         rotate(Quaternion::identity),
         translate(Vector3::zero),
@@ -15,12 +12,13 @@ public:
         parent_(nullptr) {
     }
 
-    void ShowUI() override;
-
     Transform* GetParent() { return parent_; }
     const Transform* GetParent() const { return parent_; }
     const Matrix4x4& GetWorldMatrix() const { return worldMatrix_; }
+    const Matrix4x4& GetWorldMatrixInverse() const { return worldMatrixInverse_; }
     Vector3 GetWorldPosition() const { return worldMatrix_.GetTranslate(); }
+
+    void SetParent(Transform* parent) { parent_ = parent; }
 
     void UpdateWorldMatrix();
 
@@ -30,7 +28,13 @@ public:
 
 private:
     Matrix4x4 worldMatrix_;
+    Matrix4x4 worldMatrixInverse_;
     Transform* parent_;
 
-    friend class GameObject;
+#ifdef _DEBUG
+    Vector3 eulerRotate_;
+public:
+    bool ImGuiEdit(const char* label);
+private:
+#endif
 };

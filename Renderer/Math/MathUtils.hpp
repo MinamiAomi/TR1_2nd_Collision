@@ -287,6 +287,12 @@ public:
     inline Vector3 Normalized() const noexcept {
         return *this / Length();
     }
+    inline float Min() const {
+        return std::min(std::min(x, y), z);
+    }
+    inline float Max() const {
+        return std::max(std::max(x, y), z);
+    }
 #pragma endregion
 #pragma region 静的関数
     static inline float Angle(const Vector3& from, const Vector3& to) noexcept {
@@ -308,7 +314,7 @@ public:
                 lhs.x * rhs.y - lhs.y * rhs.x };
     }
     static inline constexpr Vector3 Scale(const Vector3& lhs, const Vector3& rhs) noexcept {
-        return { lhs.x * rhs.x , lhs.y + rhs.y, lhs.z * rhs.z };
+        return { lhs.x * rhs.x , lhs.y * rhs.y, lhs.z * rhs.z };
     }
     static inline constexpr Vector3 Project(const Vector3& base, const Vector3& direction) noexcept {
         return Dot(base, direction) * direction;

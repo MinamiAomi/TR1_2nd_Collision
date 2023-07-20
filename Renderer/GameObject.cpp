@@ -4,7 +4,6 @@
 
 GameObject::GameObject() :
     parent_(nullptr),
-    transform(this),
     isActive_(true) {
 }
 
@@ -41,7 +40,7 @@ void GameObject::ShowUI() {
     }
 
     ImGui::Separator();
-    transform.ShowUI();
+   // transform.ShowUI();
     ImGui::Separator();
     for (auto& component : components_) {
         component->ShowUI();
@@ -55,7 +54,7 @@ void GameObject::ShowUI() {
 
 void GameObject::AddChild(GameObject* child) {
     children_.emplace_back(child);
-    child->transform.parent_ = &transform;
+    //child->transform.parent_ = &transform;
 }
 
 void GameObject::RemoveChild(GameObject* child) {
@@ -64,7 +63,7 @@ void GameObject::RemoveChild(GameObject* child) {
         if (iter != children_.end()) {
             std::swap(*iter, children_.back());
             children_.pop_back();
-            child->transform.parent_ = nullptr;
+           // child->transform.parent_ = nullptr;
         }
     }
 }

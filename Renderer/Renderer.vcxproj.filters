@@ -28,6 +28,9 @@
     <Filter Include="GUI">
       <UniqueIdentifier>{8e7e6a7e-2565-49ef-9f1c-ddc6464992e3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Collision">
+      <UniqueIdentifier>{4def2b0e-c4c1-429f-997f-da8e5b2a4cfb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -69,12 +72,6 @@
     <ClCompile Include="GameObject.cpp">
       <Filter>System</Filter>
     </ClCompile>
-    <ClCompile Include="Collider.cpp">
-      <Filter>System</Filter>
-    </ClCompile>
-    <ClCompile Include="Transform.cpp">
-      <Filter>System</Filter>
-    </ClCompile>
     <ClCompile Include="HierarchyView.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
@@ -87,8 +84,14 @@
     <ClCompile Include="InspectorView.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
+    <ClCompile Include="Collider.cpp">
+      <Filter>Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>Collision</Filter>
+    </ClCompile>
     <ClCompile Include="Collision.cpp">
-      <Filter>Source</Filter>
+      <Filter>Collision</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -140,12 +143,6 @@
     <ClInclude Include="Component.hpp">
       <Filter>System</Filter>
     </ClInclude>
-    <ClInclude Include="Collider.hpp">
-      <Filter>System</Filter>
-    </ClInclude>
-    <ClInclude Include="Transform.hpp">
-      <Filter>System</Filter>
-    </ClInclude>
     <ClInclude Include="Behavior.hpp">
       <Filter>System</Filter>
     </ClInclude>
@@ -165,7 +162,13 @@
       <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="Collision.h">
-      <Filter>Header</Filter>
+      <Filter>Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="Collider.hpp">
+      <Filter>Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.hpp">
+      <Filter>Collision</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

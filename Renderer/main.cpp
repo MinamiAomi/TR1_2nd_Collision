@@ -9,7 +9,10 @@
 #include "ShaderUtils.hpp"
 #include "Utils.hpp"
 
+#include "Collider.hpp"
 #include "Input.hpp"
+#include "Transform.hpp"
+#include "Collision.h"
 
 // 定数
 constexpr uint32_t kSwapChainBufferCount = 2;
@@ -17,14 +20,6 @@ constexpr uint32_t kSwapChainBufferCount = 2;
 const uint32_t kClientWidth = 1280;
 const uint32_t kClientHeight = 720;
 
-struct CollisionObject {
-    Vector3 translate;
-    Quaternion rotate;
-    Vector3 scale{ 1,1,1 };
-    Matrix4x4 matrix;
-
-    void UpdateMatrix();
-};
 
 struct Camera {
     Vector3 position = { 0.0f,1.0f,-6.0f };
@@ -56,6 +51,28 @@ struct DirectionalLight {
 };
 
 
+void Draw(BoxCollider box, Renderer& renderer, const Vector4& color) {
+    Matrix4x4 local = Matrix4x4::MakeAffineTransform(box.size, Quaternion::identity, box.center);
+    renderer.DrawBox(local * box.transform.GetWorldMatrix(), color, DrawMode::kWireFrame);
+}
+void Draw(SphereCollider sphere, Renderer& renderer, const Vector4& color) {
+    float radius = sphere.radius * sphere.transform.scale.Max();
+    Vector3 center = sphere.center * sphere.transform.GetWorldMatrix();
+    Matrix4x4 matrix = Matrix4x4::MakeAffineTransform(Vector3{ radius }, Quaternion::identity, center);
+    renderer.DrawSphere(matrix, color, DrawMode::kWireFrame);
+}
+
+void DragDegree(const char* label, float& radian, float speed = 1.0f, float min = -360.0f, float max = 360.0f, const char* format = "%.0f") {
+    float deg = radian * Math::ToDegree;
+    ImGui::DragFloat(label, &deg, speed, min, max, format);
+    radian = deg * Math::ToRadian;
+}
+void DragDegree3(const char* label, Vector3& radian, float speed = 1.0f, float min = -360.0f, float max = 360.0f, const char* format = "%.0f") {
+    Vector3 deg = radian * Math::ToDegree;
+    ImGui::DragFloat3(label, &deg.x, speed, min, max, format);
+    radian = deg * Math::ToRadian;
+}
+
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
     std::srand((unsigned int)std::time(nullptr));
@@ -65,19 +82,23 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
     Input::Initialize();
 
 
-    CollisionObject obj1;
-    obj1.translate = { 1,0,0 };
-
-    CollisionObject obj2;
-    obj2.translate = { -1,0,0 };
 
 
     Camera camera;
     DirectionalLight light;
+    Vector3 directionRotate;
 
+    BoxCollider sphere;
+    sphere.transform.translate = { -1,0,0 };
+    BoxCollider box;
+    box.transform.translate = { 1 ,0,0 };
 
+    Vector4 color{1.0f};
 
-
+    Transform simplex[4];
+    for (auto& t : simplex) {
+        t.scale = Vector3{ 0.05f };
+    }
 
     {
         MSG msg{};
@@ -92,33 +113,64 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
                 Input::Update();
                 renderer.StartRendering();
 
-                ImGui::Begin("Window");
-                ImGui::DragFloat3("Direction", &light.direction.x, 0.01f);
-                light.direction = light.direction.Normalized();
-                ImGui::ColorEdit4("color", &light.color.x);
-                ImGui::DragFloat("intensity", &light.intensity, 0.01f);
+                ImGui::Begin("Camera");
+                Vector3 cameraDir = Matrix4x4::MakeRotationXYZ(camera.rotate).GetZAxis();
+                ImGui::InputFloat3("Direction", &cameraDir.x);
+                ImGui::End();
 
+                ImGui::Begin("Window");
+
+                DragDegree3("Direction rotate", directionRotate);
+                light.direction = Quaternion::MakeFromEulerAngle(directionRotate) * Vector3::unitZ;
+
+
+                sphere.transform.ImGuiEdit("Sphere transform");
+
+               /* ImGui::DragFloat3("Sphere center", &sphere.center.x, 0.01f);
+                ImGui::DragFloat("Sphere radius", &sphere.radius, 0.01f);*/
+                box.transform.ImGuiEdit("Box transform");
+                ImGui::DragFloat3("Box center", &box.center.x, 0.01f);
+                ImGui::DragFloat3("Box size", &box.size.x, 0.01f);
 
 
                 ImGui::End();
 
 
+                sphere.transform.UpdateWorldMatrix();
+                box.transform.UpdateWorldMatrix();
 
+                color = Vector4::one;
+                GJKInfo gjkInfo{};
+                if (GJK(sphere, box, &gjkInfo)) {
+                    EPAInfo epaInfo = EPA(gjkInfo, sphere, box);
+                    color = { 1,0,0,1 };
+                    
+                    sphere.transform.translate -= epaInfo.normal * epaInfo.depth * 0.5f;
+                    box.transform.translate += epaInfo.normal * epaInfo.depth * 0.5f;
 
-                obj1.UpdateMatrix();
-                obj2.UpdateMatrix();
+                    sphere.transform.UpdateWorldMatrix();
+                    box.transform.UpdateWorldMatrix();
 
-
-
+                    for (size_t i = 0; i < 4; ++i) {
+                        simplex[i].translate = gjkInfo.simplex[i];
+                        simplex[i].UpdateWorldMatrix();
+                    }
+               }
 
                 camera.Update();
                 renderer.SetCamera(camera.position, camera.rotate);
                 renderer.SetLight(light.direction, light.color, light.intensity);
 
+                renderer.DrawSphere(Matrix4x4::MakeAffineTransform(Vector3(0.05f), Quaternion::identity, {}), { 0,0,0,1 }, DrawMode::kObject);
+                Draw(sphere, renderer, color);
+                Draw(box, renderer, color);
 
+                if (color != Vector4::one) {
+                    for (auto& t : simplex) {
+                        renderer.DrawSphere(t.GetWorldMatrix(), {0,1,1,1}, DrawMode::kObject);
+                    }
+                }
 
-                renderer.DrawBox(obj1.matrix, Vector4::one, DrawMode::kObject);
-                renderer.DrawSphere(obj2.matrix, Vector4::one, DrawMode::kObject);
 
                 renderer.EndRendering();
             }
@@ -130,6 +182,3 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
     return 0;
 }
 
-void CollisionObject::UpdateMatrix() {
-    matrix = Matrix4x4::MakeAffineTransform(scale, rotate, translate);
-}

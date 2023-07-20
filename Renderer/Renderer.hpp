@@ -30,6 +30,9 @@ public:
     void DrawSphere(const Matrix4x4& world_matrix, const Vector4& color, DrawMode draw_mode);
     void DrawCapsule(const Matrix4x4& world_matrix, const Vector4& color, DrawMode draw_mode);
     
+    void DrawBox(const Vector3& center, const Vector3& size, const Matrix4x4& worldMatrix, const Vector4& color);
+    void DrawSphere(const Vector3& center, float radius, const Matrix4x4& worldMatrix, const Vector4& color);
+
     void DrawObject(std::size_t mesh_handle, const Vector3& scale, const Quaternion& rotate, const Vector3& translate, const Vector4& color);
 
     void SetCamera(const Vector3& pos, const Vector3& rot);

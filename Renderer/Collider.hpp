@@ -1,38 +1,67 @@
 #pragma once
 
+#include <vector>
+
 #include "Math/MathUtils.hpp"
 #include "AABB.hpp"
-
-#include <functional>
+#include "Transform.hpp"
 
 class Collider {
 public:
-    using CollBack = std::function<void(void)>;
 
     virtual ~Collider() {}
     virtual Vector3 FindFurthestPoint(const Vector3& direction) const = 0;
 
-    void SetIsActive(bool isActive) { isActive_ = isActive; }
-    void SetIsTrigger(bool isTrigger) { isTrigger_ = isTrigger; }
-    void SetEnterCollBack(const CollBack& collBack) { enterCollBack_ = collBack; }
-    void SetStayCollBack(const CollBack& collBack) { stayCollBack_ = collBack; }
-    void SetExitCollBack(const CollBack& collBack) { exitCollBack_ = collBack; }
- 
-    bool IsActive() const { return isActive_; }
-    bool IsTrigger() const { return isTrigger_; }
-    const CollBack& GetEnterCollBack() const { return enterCollBack_; }
-    const CollBack& GetStayCollBack() const { return stayCollBack_; }
-    const CollBack& GetExitCollBack() const { return exitCollBack_; }
     const AABB& GetAABB() const { return aabb_; }
+
+    Transform transform;
 
 protected:
     AABB aabb_{};
-
-private:
-    CollBack enterCollBack_;
-    CollBack stayCollBack_;
-    CollBack exitCollBack_;
-    bool isActive_;
-    bool isTrigger_;
 };
 
+class SphereCollider : public Collider {
+public:
+    Vector3 center;
+    float radius{ 0.5f };
+
+    Vector3 FindFurthestPoint(const Vector3& direction) const override {
+        return direction.Normalized() * (radius * transform.scale.Max()) + center * transform.GetWorldMatrix();
+    }
+};
+
+class BoxCollider : public Collider {
+public:
+    Vector3 center;
+    Vector3 size{ 1.0f };
+
+    Vector3 FindFurthestPoint(const Vector3& direction) const override {
+        Vector3 localDirection = transform.GetWorldMatrixInverse().ApplyRotation(direction);
+        Vector3 localPoint;
+        localPoint.x = (localDirection.x > 0.0f ? size.x : -size.x) * 0.5f;
+        localPoint.y = (localDirection.y > 0.0f ? size.y : -size.y) * 0.5f;
+        localPoint.z = (localDirection.z > 0.0f ? size.z : -size.z) * 0.5f;
+
+        return (localPoint + center) * transform.GetWorldMatrix();
+    }
+};
+
+class MeshCollider : public Collider {
+public:
+    std::vector<Vector3> vertices;
+
+    Vector3 FindFurthestPoint(const Vector3& direction) const override {
+        Vector3 localDirection = transform.GetWorldMatrixInverse().ApplyRotation(direction);
+        auto iter = vertices.begin();
+        auto furthestPoint = iter++;
+        float maxDistance = Dot(*furthestPoint, localDirection);
+        for (; iter != vertices.end(); ++iter) {
+            float distance = Dot(*iter, localDirection);
+            if (distance > maxDistance) {
+                maxDistance = distance;
+                furthestPoint = iter;
+            }
+        }
+        return *furthestPoint * transform.GetWorldMatrix();
+    }
+};
