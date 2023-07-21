@@ -88,6 +88,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
     DirectionalLight light;
     Vector3 directionRotate;
 
+    std::vector<BoxCollider> boxes(10);
+    for (auto& box : boxes) {
+       
+    }
+    
+
     BoxCollider sphere;
     sphere.transform.translate = { -1,0,0 };
     BoxCollider box;

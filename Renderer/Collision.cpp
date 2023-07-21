@@ -6,6 +6,12 @@
 #include <vector>
 
 namespace {
+    //　GJK最大反復回数
+    constexpr uint32_t kGJKMaxIterationCount = 64;
+    //　EPA最大反復回数
+    constexpr uint32_t kEPAMaxIterationCount = 64;
+    // EPA距離許容値
+    constexpr float kDistanceTolerance = 0.001f;
 
     struct Simplex {
         Simplex& operator=(std::initializer_list<Vector3> list) {
@@ -95,7 +101,6 @@ namespace {
 }
 
 bool GJK(const Collider& collider1, const Collider& collider2, GJKInfo* gjkInfo) {
-    constexpr uint32_t kMaxIterationCount = 64;
     Simplex simplex;
     Vector3 direction, support;
 
@@ -120,7 +125,7 @@ bool GJK(const Collider& collider1, const Collider& collider2, GJKInfo* gjkInfo)
         }
     }
 
-    for (uint32_t iterationCount = 0; iterationCount < kMaxIterationCount; ++iterationCount) {
+    for (uint32_t iterationCount = 0; iterationCount < kGJKMaxIterationCount; ++iterationCount) {
         support = Support(collider1, collider2, direction);
         if (Dot(support, direction) < 0.0f) { return false; }
         simplex.Push(support);
@@ -140,74 +145,79 @@ bool GJK(const Collider& collider1, const Collider& collider2, GJKInfo* gjkInfo)
 }
 
 EPAInfo EPA(const GJKInfo& gjkInfo, const Collider& collider1, const Collider& collider2) {
-    constexpr uint32_t kMaxIterationCount = 64;
-    constexpr float kDistanceTolerance = 0.0001f;
     std::vector<Vector3> vertices(gjkInfo.simplex.begin(), gjkInfo.simplex.end());
 
     using Edge = std::pair<uint32_t, uint32_t>;
 
     struct Face {
-        std::array<uint32_t,3> index;
+        std::array<uint32_t, 3> index;
         Vector3 normal;
         float distance;
+        bool invalid;
     };
 
     std::vector<Face> faces;
     auto AddFace = [&](uint32_t a, uint32_t b, uint32_t c) {
         auto& face = faces.emplace_back();
         face.index[0] = a, face.index[1] = b, face.index[2] = c;
-        face.normal = Cross(vertices[b] - vertices[a], vertices[c] - vertices[a]).Normalized();
+        Vector3 cross = Cross(vertices[b] - vertices[a], vertices[c] - vertices[a]);
+        float length = cross.Length();
+        face.normal = cross / length;
         face.distance = Dot(vertices[a], face.normal);
+        // 面の法線が正しくない
+        face.invalid = (length == 0.0f);
     };
-    auto FaceDistance = [&](size_t faceIndex) {
-        return Dot(vertices[faces[faceIndex].index[0]], faces[faceIndex].normal);
-    };
+
     AddFace(0, 1, 2);
     AddFace(0, 2, 3);
     AddFace(0, 3, 1);
     AddFace(1, 3, 2);
 
-    uint32_t closestFaceIndex = 0;
+    auto closestFace = faces.begin();
 
-    for (uint32_t iterationCount = 0; iterationCount < kMaxIterationCount; ++iterationCount) {
+
+
+    for (uint32_t iterationCount = 0; iterationCount < kEPAMaxIterationCount; ++iterationCount) {
         // 最も近い面を見つける
-        float minDistance = FaceDistance(0);
-        closestFaceIndex = 0;
-        for (uint32_t i = 1; i < faces.size(); ++i) {
-            float distance = FaceDistance(i);
+        closestFace = faces.begin();
+        float minDistance = closestFace->distance;
+        auto facesEnd = faces.end();
+        for (auto iter = faces.begin(); iter != facesEnd; ++iter) {
+            float distance = iter->distance;
             if (distance < minDistance) {
                 minDistance = distance;
-                closestFaceIndex = i;
+                closestFace = iter;
             }
         }
-
-        Vector3 direction = faces[closestFaceIndex].normal;
+        // 見つかった面の法線でサポート写像を取得
+        Vector3 direction = closestFace->normal;
         Vector3 support = Support(collider1, collider2, direction);
 
         if (Dot(support, direction) - minDistance < kDistanceTolerance) {
-            EPAInfo info;
-            info.normal = faces[closestFaceIndex].normal;
-            info.depth = Dot(support, direction);
-            if (isnan(info.depth)) {
-                return {};
-            }
-            return info;
+            EPAInfo epaInfo{};
+            epaInfo.normal = closestFace->normal;
+            epaInfo.depth = closestFace->distance + kDistanceTolerance;
+            if (closestFace->invalid) { return {}; }
+            return epaInfo;
         }
-
+        // 頂点に追加
         vertices.emplace_back(support);
 
         std::vector<Edge> loseEdges;
+        // 点を追加したことにより削除する必要のある辺を探す
         for (uint32_t i = 0; i < faces.size(); ++i) {
+            // 三角形が追加点に面しているか
             if (Dot(faces[i].normal, support - vertices[faces[i].index[0]]) > 0) {
                 for (uint32_t j = 0; j < 3; ++j) {
                     Edge currentEdge = { faces[i].index[j], faces[i].index[(j + 1) % 3] };
                     bool foundEdge = false;
+                    // 現在の辺がすでにリストにあるか探す
                     for (uint32_t k = 0; k < loseEdges.size(); ++k) {
                         if (loseEdges[k].second == currentEdge.first && loseEdges[k].first == currentEdge.second) {
                             loseEdges[k] = loseEdges.back();
                             loseEdges.pop_back();
                             foundEdge = true;
-                            k = uint32_t(loseEdges.size());
+                            break;
                         }
                     }
 
@@ -227,7 +237,7 @@ EPAInfo EPA(const GJKInfo& gjkInfo, const Collider& collider1, const Collider& c
             auto& addedFace = faces.back();
 
             float bias = 0.000001f;
-            if (Dot(vertices[addedFace.index[0]], addedFace.normal) + bias < 0) {
+            if (addedFace.distance + bias < 0) {
                 uint32_t temp = addedFace.index[0];
                 addedFace.index[0] = addedFace.index[1];
                 addedFace.index[1] = temp;
@@ -236,11 +246,9 @@ EPAInfo EPA(const GJKInfo& gjkInfo, const Collider& collider1, const Collider& c
         }
     }
 
-    EPAInfo info;
-    info.normal = faces[closestFaceIndex].normal;
-    info.depth = Dot(vertices[faces[closestFaceIndex].index[0]], faces[closestFaceIndex].normal);
-    if (isnan(info.depth)) {
-        return {};
-    }
-    return info;
+    EPAInfo epaInfo;
+    epaInfo.normal = closestFace->normal;
+    epaInfo.depth = closestFace->distance;
+    if (closestFace->invalid) { return {}; }
+    return epaInfo;
 }
