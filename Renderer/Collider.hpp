@@ -84,7 +84,7 @@ public:
       
         float half = height
 
-        return (localPoint + center) * transform.GetWorldMatrix();
+        return localDirection * half;
     }
 
     void UpdateAABB() override {

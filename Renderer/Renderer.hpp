@@ -44,9 +44,10 @@ private:
     Renderer(Renderer&&) = delete;
     Renderer& operator=(Renderer&&) = delete;
 
-    void CreateBoxMesh();
-    void CreateSphereMesh();
-    void CreateCapusleMesh();
+    std::size_t CreatePlaneMesh();
+    std::size_t CreateBoxMesh();
+    std::size_t CreateSphereMesh();
+    std::size_t CreateCylinderMesh();
 
     class Impl; Impl* const pimpl_;
 

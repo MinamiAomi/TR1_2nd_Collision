@@ -29,7 +29,10 @@
       <UniqueIdentifier>{8e7e6a7e-2565-49ef-9f1c-ddc6464992e3}</UniqueIdentifier>
     </Filter>
     <Filter Include="Collision">
-      <UniqueIdentifier>{18779147-a153-4de2-ae74-28af7203586c}</UniqueIdentifier>
+      <UniqueIdentifier>{4def2b0e-c4c1-429f-997f-da8e5b2a4cfb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DirectX12">
+      <UniqueIdentifier>{25648c25-bf3d-44f3-b68b-9460547d0ef6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -84,13 +87,13 @@
     <ClCompile Include="InspectorView.cpp">
       <Filter>GUI</Filter>
     </ClCompile>
-    <ClCompile Include="Collision.cpp">
-      <Filter>Collision</Filter>
-    </ClCompile>
     <ClCompile Include="Collider.cpp">
       <Filter>Collision</Filter>
     </ClCompile>
     <ClCompile Include="Transform.cpp">
+      <Filter>Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="Collision.cpp">
       <Filter>Collision</Filter>
     </ClCompile>
   </ItemGroup>
