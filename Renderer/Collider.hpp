@@ -75,14 +75,14 @@ public:
 class CapsuleCollider : public Collider {
 public:
     Vector3 center;
-    Vector3 direction;
+    Vector3 yDirection;
     float height;
     float radius;
 
     Vector3 FindFurthestPoint(const Vector3& direction) const override {
         Vector3 localDirection = transform.GetWorldMatrixInverse().ApplyRotation(direction);
       
-        float half = height
+        float half = height;
 
         return localDirection * half;
     }

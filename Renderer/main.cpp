@@ -87,7 +87,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
     renderer.Initailize(L"RendererTest", 1280, 720);
     Input::Initialize();
 
-
+   
 
 
     Camera camera;
