@@ -1021,10 +1021,31 @@ void Renderer::Initailize(const std::wstring& window_title, const std::uint32_t 
         }
         sphere_ = pimpl_->RegisterMesh(vertices, indices);
     }
+    {
+        std::vector<Vertex> vertices;
+        std::vector<uint16_t> indices;
+
+        {
+            const size_t kSubdivision = 16;
+            const float kAngleEvery = Math::Pi / float(kSubdivision);
+            const size_t kVertexCount = kSubdivision * 2 + 2;
+
+            std::vector<Vector3> positions;
+            positions.resize(kVertexCount);
+
+            for (size_t i = 0; i < kSubdivision; ++i) {
+                float angle = kAngleEvery * i;
+                positions[i] = { std::cos(angle) , 0.5f, std::sin(angle) };
+                positions[i + kSubdivision] = { std::cos(angle) , -0.5f, std::sin(angle) };
+            }
 
 
+        }
 
+        cylinder_ = pimpl_->RegisterMesh(vertices, indices);
+    }
 }
+
 
 void Renderer::StartRendering() {
     pimpl_->StartRendering();
@@ -1067,6 +1088,14 @@ void Renderer::DrawSphere(const Matrix4x4& world_matrix, const Vector4& color, D
         return;
     }
     pimpl_->AddWireFrameInstance(sphere_, world_matrix, color);
+}
+
+void Renderer::DrawCylinder(const Matrix4x4& world_matrix, const Vector4& color, DrawMode draw_mode) {
+    if (draw_mode == DrawMode::kObject) {
+        pimpl_->AddObjInstance(cylinder_, world_matrix, color);
+        return;
+    }
+    pimpl_->AddWireFrameInstance(cylinder_, world_matrix, color);
 }
 
 void Renderer::DrawObject(std::size_t mesh_handle, const Vector3& scale, const Quaternion& rotate, const Vector3& translate, const Vector4& color) {

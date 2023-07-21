@@ -28,7 +28,7 @@ public:
     void DrawPlane(const Matrix4x4& world_matrix, const Vector4& color, DrawMode draw_mode);
     void DrawBox(const Matrix4x4& world_matrix, const Vector4& color, DrawMode draw_mode);
     void DrawSphere(const Matrix4x4& world_matrix, const Vector4& color, DrawMode draw_mode);
-    void DrawCapsule(const Matrix4x4& world_matrix, const Vector4& color, DrawMode draw_mode);
+    void DrawCylinder(const Matrix4x4& world_matrix, const Vector4& color, DrawMode draw_mode);
     
     void DrawBox(const Vector3& center, const Vector3& size, const Matrix4x4& worldMatrix, const Vector4& color);
     void DrawSphere(const Vector3& center, float radius, const Matrix4x4& worldMatrix, const Vector4& color);
@@ -53,4 +53,5 @@ private:
     std::size_t plane_ = 0;
     std::size_t box_ = 0;
     std::size_t sphere_ = 0;
+    std::size_t cylinder_ = 0;
 };
