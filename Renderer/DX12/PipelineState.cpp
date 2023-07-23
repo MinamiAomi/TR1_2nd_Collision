@@ -10,6 +10,11 @@ namespace CG::DX12 {
 
     GraphicsPipelineStateDesc::operator const D3D12_GRAPHICS_PIPELINE_STATE_DESC& () {
         desc_.NumRenderTargets = renderTargetCount_;
+        auto elem = inputElements_.begin();
+        auto name = semanticNames_.begin();
+        for (; elem != inputElements_.end(); ++elem, ++name) {
+            elem->SemanticName = name->c_str();
+        }
         desc_.InputLayout.pInputElementDescs = inputElements_.data();
         desc_.InputLayout.NumElements = static_cast<uint32_t>(inputElements_.size());
         desc_.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
@@ -47,8 +52,7 @@ namespace CG::DX12 {
 
     void GraphicsPipelineStateDesc::AddInputElementVertex(const std::string& semanticName, uint32_t semanticIndex, DXGI_FORMAT format, uint32_t inputSlot) {
         auto& inputElement = inputElements_.emplace_back();
-        semanticNames_.emplace_back(semanticName);
-        inputElement.SemanticName = semanticNames_.back().c_str();
+        semanticNames_.push_back(semanticName);
         inputElement.SemanticIndex = semanticIndex;
         inputElement.Format = format;
         inputElement.InputSlot = inputSlot;
@@ -59,8 +63,7 @@ namespace CG::DX12 {
 
     void GraphicsPipelineStateDesc::AddInputElementInstance(const std::string& semanticName, uint32_t semanticIndex, DXGI_FORMAT format, uint32_t inputSlot, uint32_t instanceDataStepRate) {
         auto& inputElement = inputElements_.emplace_back();
-        semanticNames_.emplace_back(semanticName);
-        inputElement.SemanticName = semanticNames_.back().c_str();
+        semanticNames_.push_back(semanticName);
         inputElement.SemanticIndex = semanticIndex;
         inputElement.Format = format;
         inputElement.InputSlot = inputSlot;
@@ -69,8 +72,8 @@ namespace CG::DX12 {
         inputElement.InstanceDataStepRate = instanceDataStepRate;
     }
 
-    void GraphicsPipelineStateDesc::SetRasterizerState(CullMode cullMode, bool fillModeSolidOrWireFrame) {
-        desc_.RasterizerState.FillMode = fillModeSolidOrWireFrame ? D3D12_FILL_MODE_SOLID : D3D12_FILL_MODE_WIREFRAME;
+    void GraphicsPipelineStateDesc::SetRasterizerState(CullMode cullMode, FillMode fillMode) {
+        desc_.RasterizerState.FillMode = static_cast<D3D12_FILL_MODE>(fillMode);
         desc_.RasterizerState.CullMode = static_cast<D3D12_CULL_MODE>(cullMode);
     }
 
@@ -141,6 +144,13 @@ namespace CG::DX12 {
         desc_.DepthStencilState.StencilEnable = true;
         desc_.DepthStencilState.StencilReadMask = readMask;
         desc_.DepthStencilState.StencilWriteMask = writeMask;
+    }
+
+    void GraphicsPipelineStateDesc::Clear() {
+        desc_ = {};
+        renderTargetCount_ = 0;
+        inputElements_.clear();
+        semanticNames_.clear();
     }
 
     ComputePipelineStateDesc::operator const D3D12_COMPUTE_PIPELINE_STATE_DESC& () {

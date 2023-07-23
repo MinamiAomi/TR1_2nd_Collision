@@ -27,6 +27,11 @@ namespace CG::DX12 {
         Front = D3D12_CULL_MODE_FRONT,  // 前面カリング
         Back = D3D12_CULL_MODE_BACK,    // 背面カリング
     };
+    // フィルモード
+    enum class FillMode {
+        Solid = D3D12_FILL_MODE_SOLID,
+        WireFrame = D3D12_FILL_MODE_WIREFRAME,
+    };
     // 比較関数
     enum class ComparisonFunc {
         Never = D3D12_COMPARISON_FUNC_NEVER,                // 比較に成功しない
@@ -57,12 +62,14 @@ namespace CG::DX12 {
         void SetGeometryShader(const Shader& shader);
         void AddInputElementVertex(const std::string& semanticName, uint32_t semanticIndex, DXGI_FORMAT format, uint32_t inputSlot);
         void AddInputElementInstance(const std::string& semanticName, uint32_t semanticIndex, DXGI_FORMAT format, uint32_t inputSlot, uint32_t instanceDataStepRate);
-        void SetRasterizerState(CullMode cullMode = CullMode::Back, bool fillModeSolidOrWireFrame = true);
+        void SetRasterizerState(CullMode cullMode = CullMode::Back, FillMode fillMode = FillMode::Solid);
         void SetSampleState(uint32_t count = 1, uint32_t quality = 0);
         void SetPrimitiveTopologyType(PrimitiveTopology primitiveTopology);
         void AddRenderTargetState(BlendMode blendMode, DXGI_FORMAT rtvFormat);
         void SetDepthState(DXGI_FORMAT dsvFormat, ComparisonFunc comparisonFunc = ComparisonFunc::LessEqual, bool depthWriteMaskAllOrZero = true);
         void SetStencilState(uint8_t readMask, uint8_t writeMask);
+        void Clear();
+        
     private:
         D3D12_GRAPHICS_PIPELINE_STATE_DESC desc_;
         uint32_t renderTargetCount_{ 0 };

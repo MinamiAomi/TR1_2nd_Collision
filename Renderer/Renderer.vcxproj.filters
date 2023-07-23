@@ -72,9 +72,6 @@
     <ClCompile Include="Renderer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="ShaderUtils.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Input.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -138,6 +135,21 @@
     <ClCompile Include="DX12\Views.cpp">
       <Filter>DirectX12\Source</Filter>
     </ClCompile>
+    <ClCompile Include="DX12\ShaderCompiler.cpp">
+      <Filter>DirectX12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12\DX12.cpp">
+      <Filter>DirectX12\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionManager.cpp">
+      <Filter>Collision</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -170,13 +182,7 @@
     <ClInclude Include="Renderer.hpp">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="ShaderUtils.hpp">
-      <Filter>Header</Filter>
-    </ClInclude>
     <ClInclude Include="Input.hpp">
-      <Filter>Header</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils.hpp">
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="AABB.hpp">
@@ -254,6 +260,21 @@
     <ClInclude Include="DX12\Views.h">
       <Filter>DirectX12\Include</Filter>
     </ClInclude>
+    <ClInclude Include="DX12\ShaderCompiler.h">
+      <Filter>DirectX12\Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiEx.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionManager.h">
+      <Filter>Collision</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="object_vs.hlsl">
@@ -266,6 +287,12 @@
       <Filter>Resource\Shader</Filter>
     </None>
     <None Include="wire_frame_vs.hlsl">
+      <Filter>Resource\Shader</Filter>
+    </None>
+    <None Include="line_vs.hlsl">
+      <Filter>Resource\Shader</Filter>
+    </None>
+    <None Include="line_ps.hlsl">
       <Filter>Resource\Shader</Filter>
     </None>
   </ItemGroup>

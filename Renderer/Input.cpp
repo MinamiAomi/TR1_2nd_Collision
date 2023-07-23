@@ -3,10 +3,10 @@
 #include <dinput.h>
 #include <wrl.h>
 
+#include <cassert>
 #include <cstdint>
 #include <cstdlib>
 
-#include "Utils.hpp"
 #include "Math/MathUtils.hpp"
 
 #pragma comment(lib,"dinput8.lib")
@@ -26,17 +26,31 @@ public:
         directInput_.Reset();
         keybord_.Reset();
 
-        COM_RESULT(DirectInput8Create(
+        if (FAILED(DirectInput8Create(
             GetModuleHandle(nullptr), DIRECTINPUT_HEADER_VERSION,
-            IID_IDirectInput8, (void**)directInput_.GetAddressOf(), nullptr));
+            IID_IDirectInput8, (void**)directInput_.GetAddressOf(), nullptr))) {
+            assert(false);
+        }
 
-        COM_RESULT(directInput_->CreateDevice(GUID_SysKeyboard, &keybord_, nullptr));
-        COM_RESULT(keybord_->SetDataFormat(&c_dfDIKeyboard));
-        COM_RESULT(keybord_->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY));
+        if (FAILED((directInput_->CreateDevice(GUID_SysKeyboard, &keybord_, nullptr)))) {
+            assert(false);
+        }
+        if (FAILED((keybord_->SetDataFormat(&c_dfDIKeyboard)))) {
+            assert(false);
+        }
+        if (FAILED((keybord_->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY)))) {
+            assert(false);
+        }
 
-        COM_RESULT(directInput_->CreateDevice(GUID_SysMouse, &mouse_, nullptr));
-        COM_RESULT(mouse_->SetDataFormat(&c_dfDIMouse));
-        COM_RESULT(mouse_->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY));
+        if (FAILED(directInput_->CreateDevice(GUID_SysMouse, &mouse_, nullptr))) {
+            assert(false);
+        }
+        if (FAILED(mouse_->SetDataFormat(&c_dfDIMouse))) {
+            assert(false);
+        }
+        if (FAILED(mouse_->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY))) {
+            assert(false);
+        }
         hwnd_ = hwnd;
     }
     void Update() {

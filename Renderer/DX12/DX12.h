@@ -16,6 +16,7 @@
 #include "RootSignature.h"
 #include "PipelineState.h"
 #include "Shader.h"
+#include "ShaderCompiler.h"
 
 namespace CG::DX12 {
 
@@ -31,10 +32,21 @@ namespace CG::DX12 {
         }
     };
 
-    struct DynamicBuffer {
-        Resource resource;
-        size_t size{ 0 };
-        void* mappedPtr{ nullptr };
+    class DynamicBuffer {
+    public:
+        void Initialize(const Device& device, size_t bufferSize, bool allowUnorderedAccess = false, CG::DX12::Resource::State initialState = CG::DX12::Resource::State::GenericRead);
+        
+        Resource& GetResource() { return resource_; }
+        const Resource& GetResource() const { return resource_; }
+        size_t GetBufferSize() const { return bufferSize_; }
+        template<class T>
+        T* GetDataBegin() const { return reinterpret_cast<T*>(dataBegin_); }
+        void* GetDataBegin() const { return dataBegin_; }
+    
+    private:
+        Resource resource_;
+        size_t bufferSize_{ 0 };
+        void* dataBegin_{ nullptr };
     };
 
     struct RenderTargetResource {

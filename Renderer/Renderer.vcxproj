@@ -97,19 +97,23 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="Collision.cpp" />
+    <ClCompile Include="CollisionManager.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="DX12\CommandList.cpp" />
     <ClCompile Include="DX12\CommandQueue.cpp" />
     <ClCompile Include="DX12\Descriptor.cpp" />
     <ClCompile Include="DX12\DescriptorHeap.cpp" />
     <ClCompile Include="DX12\Device.cpp" />
+    <ClCompile Include="DX12\DX12.cpp" />
     <ClCompile Include="DX12\Fence.cpp" />
     <ClCompile Include="DX12\PipelineState.cpp" />
     <ClCompile Include="DX12\Resource.cpp" />
     <ClCompile Include="DX12\RootSignature.cpp" />
     <ClCompile Include="DX12\Shader.cpp" />
+    <ClCompile Include="DX12\ShaderCompiler.cpp" />
     <ClCompile Include="DX12\SwapChain.cpp" />
     <ClCompile Include="DX12\Views.cpp" />
     <ClCompile Include="Externals\ImGui\imgui.cpp" />
@@ -125,15 +129,17 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClCompile Include="InspectorView.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Math\MathUtils.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Scene.cpp" />
-    <ClCompile Include="ShaderUtils.cpp" />
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AABB.hpp" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="Collider.hpp" />
     <ClInclude Include="Collision.h" />
+    <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="Component.hpp" />
     <ClInclude Include="Behavior.hpp" />
     <ClInclude Include="DX12\DX12.h" />
@@ -147,6 +153,7 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="DX12\Resource.h" />
     <ClInclude Include="DX12\RootSignature.h" />
     <ClInclude Include="DX12\Shader.h" />
+    <ClInclude Include="DX12\ShaderCompiler.h" />
     <ClInclude Include="DX12\SwapChain.h" />
     <ClInclude Include="DX12\Views.h" />
     <ClInclude Include="Externals\ImGui\imconfig.h" />
@@ -159,32 +166,52 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     <ClInclude Include="Externals\ImGui\imstb_truetype.h" />
     <ClInclude Include="GameObject.hpp" />
     <ClInclude Include="HierarchyView.hpp" />
+    <ClInclude Include="ImGuiEx.h" />
     <ClInclude Include="InspectorView.hpp" />
     <ClInclude Include="Input.hpp" />
     <ClInclude Include="Math\MathUtils.hpp" />
     <ClInclude Include="Object.hpp" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="Renderer.hpp" />
     <ClInclude Include="Scene.hpp" />
-    <ClInclude Include="ShaderUtils.hpp" />
     <ClInclude Include="Transform.hpp" />
-    <ClInclude Include="Utils.hpp" />
     <ClInclude Include="ViewWindow.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="object_ps.hlsl">
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="object_vs.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="wire_frame_ps.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="wire_frame_vs.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="line_vs.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="line_ps.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

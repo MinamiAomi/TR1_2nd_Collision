@@ -1,10 +1,19 @@
 #pragma once
 
+#include <functional>
 #include <vector>
 
 #include "Math/MathUtils.hpp"
 #include "AABB.hpp"
 #include "Transform.hpp"
+
+class Collider;
+
+struct CollisionInfo {
+    Collider* collider;
+    Vector3 normal;
+    float depth;
+};
 
 class Collider {
 public:
@@ -13,13 +22,20 @@ public:
     virtual Vector3 FindFurthestPoint(const Vector3& direction) const = 0;
     virtual void UpdateAABB() = 0;
 
+    void CallBack(const CollisionInfo& info) { if (callBack_) { callBack_(info); } }
+
+    void SetCallBack(const std::function<void(const CollisionInfo&)>& callBack) { callBack_ = callBack; }
+
     const AABB& GetAABB() const { return aabb_; }
 
     Transform transform;
+    Vector4 color;
     bool isStatic = false;
 
 protected:
     AABB aabb_{};
+private:
+    std::function<void(const CollisionInfo&)> callBack_;
 };
 
 class SphereCollider : public Collider {
@@ -74,21 +90,27 @@ public:
 
 class CapsuleCollider : public Collider {
 public:
-    Vector3 center;
-    Vector3 yDirection;
-    float height;
+    Vector3 start;
+    Vector3 end;
     float radius;
 
     Vector3 FindFurthestPoint(const Vector3& direction) const override {
         Vector3 localDirection = transform.GetWorldMatrixInverse().ApplyRotation(direction);
-      
-        float half = height;
-
-        return localDirection * half;
+        Vector3 point = (Dot(localDirection, start) > Dot(localDirection, end) ? start : end) * transform.GetWorldMatrix();
+        float size = radius * transform.scale.Max();
+        return direction.Normalized() * size + point;
     }
 
     void UpdateAABB() override {
-        
+        float size = radius * transform.scale.Max();
+        Vector3 s = start * transform.GetWorldMatrix();
+        Vector3 e = end * transform.GetWorldMatrix();
+
+        aabb_.min = Vector3::Min(s, e);
+        aabb_.max = Vector3::Max(s, e);
+
+        aabb_.min += Vector3{ -size };
+        aabb_.max += Vector3{ size };
     }
 };
 
