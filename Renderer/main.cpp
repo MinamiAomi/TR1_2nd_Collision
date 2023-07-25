@@ -15,6 +15,7 @@
 #include "ImGuiEx.h"
 #include "Player.h"
 #include "CollisionManager.h"
+#include "ObjLoad.h"
 
 // クライアント領域サイズ
 const uint32_t kWindowWidth = 1280;
@@ -113,6 +114,74 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
         bool useDebugCamera = false;
         bool showAABB = false;
 
+        std::vector<Renderer::MeshHandle> meshes;
+        std::vector<std::pair<std::unique_ptr<MeshCollider>, Renderer::MeshHandle>> meshColliders;
+        {
+            auto suzanne = LoadObj("suzanne.obj");
+            std::vector<Renderer::Vertex> vertices(suzanne.positions.size());
+            for (size_t i = 0; i < suzanne.positions.size(); ++i) {
+                vertices[i].position = suzanne.positions[i];
+                vertices[i].normal = suzanne.normals[i];
+            }
+            meshes.emplace_back(renderer.RegisterMesh(vertices, suzanne.indices));
+
+            meshColliders.emplace_back(std::make_unique<MeshCollider>(), meshes.back());
+            meshColliders.back().first->vertices = suzanne.positions;
+            meshColliders.back().first->transform.translate = { 1.0f,1.0f,0.0f };
+            collisionManager.AddCollider(meshColliders.back().first.get());
+        }
+        {
+            auto boxex = LoadObj("boxex.obj");
+            std::vector<Renderer::Vertex> vertices(boxex.positions.size());
+            for (size_t i = 0; i < boxex.positions.size(); ++i) {
+                vertices[i].position = boxex.positions[i];
+                vertices[i].normal = boxex.normals[i];
+            }
+            meshes.emplace_back(renderer.RegisterMesh(vertices, boxex.indices));
+
+            meshColliders.emplace_back(std::make_unique<MeshCollider>(), meshes.back());
+            meshColliders.back().first->vertices = boxex.positions;
+            meshColliders.back().first->transform.translate = { 1.0f,1.0f,10.0f };
+            collisionManager.AddCollider(meshColliders.back().first.get());
+        }
+        {
+            auto tetora = LoadObj("tetora.obj");
+            std::vector<Renderer::Vertex> vertices(tetora.positions.size());
+            for (size_t i = 0; i < tetora.positions.size(); ++i) {
+                vertices[i].position = tetora.positions[i];
+                vertices[i].normal = tetora.normals[i];
+            }
+            meshes.emplace_back(renderer.RegisterMesh(vertices, tetora.indices));
+  
+            meshColliders.emplace_back(std::make_unique<MeshCollider>(), meshes.back());
+            meshColliders.back().first->vertices = tetora.positions;
+            meshColliders.back().first->isStatic = true;
+            meshColliders.back().first->transform.translate = { -5.0f,0.0f,10.0f };
+            meshColliders.back().first->transform.UpdateWorldMatrix();
+            meshColliders.back().first->UpdateAABB();
+            collisionManager.AddCollider(meshColliders.back().first.get());
+        }
+        {
+            auto tera = LoadObj("tera.obj");
+            std::vector<Renderer::Vertex> vertices(tera.positions.size());
+            for (size_t i = 0; i < tera.positions.size(); ++i) {
+                vertices[i].position = tera.positions[i];
+                vertices[i].normal = tera.normals[i];
+            }
+            meshes.emplace_back(renderer.RegisterMesh(vertices, tera.indices));
+
+            meshColliders.emplace_back(std::make_unique<MeshCollider>(), meshes.back());
+            meshColliders.back().first->vertices = tera.positions;
+            meshColliders.back().first->isStatic = true;
+            meshColliders.back().first->transform.translate = { 0.0f,0.0f,30.0f };
+            meshColliders.back().first->transform.scale = { 1.0f,1.0f,1.0f };
+            meshColliders.back().first->color = { 0.0f,0.2f,0.0f,1.0f };
+            meshColliders.back().first->transform.UpdateWorldMatrix();
+            meshColliders.back().first->UpdateAABB();
+            collisionManager.AddCollider(meshColliders.back().first.get());
+            
+        }
+        light.direction = Quaternion::MakeFromEulerAngle(lightRotate) * Vector3::unitZ;
         {
             MSG msg{};
             // ウィンドウの×ボタンがが押されるまでループ
@@ -134,6 +203,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
                         }
 
                         player.Update();
+                        for (auto& mesh : meshColliders) {
+                            mesh.first->transform.UpdateWorldMatrix();
+                        }
 
                         collisionManager.Solver();
 
@@ -153,6 +225,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
                         DrawCapsule(player, renderer, Vector4::one);
 
 
+
+                        for (auto& mesh : meshColliders) {
+                            if (showAABB) {
+                                DrawAABB(mesh.first->GetAABB(), renderer, { 0,0,0,1 });
+                            }
+                            renderer.DrawMesh(mesh.second, mesh.first->transform.GetWorldMatrix(), mesh.first->color, Renderer::DrawMode::Object);
+                        }
+
                         renderer.DrawLine(Vector3::right * 1000, Vector3::left * 1000, { 1,0,0,1 });
                         renderer.DrawLine(Vector3::up * 1000, Vector3::down * 1000, { 0,1,0,1 });
                         renderer.DrawLine(Vector3::forward * 1000, Vector3::back * 1000, { 0,0,1,1 });
@@ -161,18 +241,18 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
                         ImGui::Checkbox("Show aabb", &showAABB);
                         ImGui::Checkbox("Debug camera", &useDebugCamera);
 
-                        if (ImGui::TreeNodeEx("Light", ImGuiTreeNodeFlags_DefaultOpen)) {
+                       /* if (ImGui::TreeNodeEx("Light", ImGuiTreeNodeFlags_DefaultOpen)) {
                             ImGui::Ex::DragDegree3("Direction rotate", lightRotate);
                             light.direction = Quaternion::MakeFromEulerAngle(lightRotate) * Vector3::unitZ;
                             ImGui::Ex::TextVector3("Direction", light.direction);
                             ImGui::ColorEdit4("Color", &light.color.x);
                             ImGui::DragFloat("Intensity", &light.intensity, 0.01f);
                             ImGui::TreePop();
-                        }
+                        }*/
 
                         ImGui::End();
 
-                        player.ImGuiEdit();
+                        //player.ImGuiEdit();
 
                         renderer.EndRendering();
                     }
@@ -265,8 +345,8 @@ void World::Initialize(CollisionManager& collisionManager) {
     capsule = std::make_unique<CapsuleCollider>();
     capsule->isStatic = true;
     capsule->transform.translate = { 7.0f, 0.0f, -10.0f };
-    capsule->start = {3.0f,0.0f,0.0f};
-    capsule->end = {-3.0f,0.0f,0.0f};
+    capsule->start = { 3.0f,0.0f,0.0f };
+    capsule->end = { -3.0f,0.0f,0.0f };
     capsule->radius = 3.0f;
     capsule->color = { 1.0f,0.0f,0.0f,1.0f };
     capsule->transform.UpdateWorldMatrix();

@@ -29,7 +29,7 @@ public:
     const AABB& GetAABB() const { return aabb_; }
 
     Transform transform;
-    Vector4 color;
+    Vector4 color{1,1,1,1};
     bool isStatic = false;
 
 protected:
@@ -131,5 +131,13 @@ public:
             }
         }
         return *furthestPoint * transform.GetWorldMatrix();
+    }
+
+    void UpdateAABB() override {
+        auto iter = vertices.begin();
+        aabb_.min = aabb_.max = *iter * transform.GetWorldMatrix();
+        for (; iter != vertices.end(); ++iter) {
+            aabb_.Include(*iter * transform.GetWorldMatrix());
+        }
     }
 };
