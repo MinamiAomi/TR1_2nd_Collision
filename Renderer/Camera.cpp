@@ -26,7 +26,7 @@ void Camera::Update() {
 void Camera::SetProjectionMatrix(float fovY, float aspectRaito, float nearZ, float farZ) {
     fovY_ = fovY;
     aspectRaito_ = aspectRaito;
-    nearZ_ = nearZ;
-    farZ_ = farZ;
-    projectionMatrix_ = Matrix4x4::MakePerspectiveProjection(fovY_, aspectRaito_, nearZ_, farZ_);
+    nearClip = nearZ;
+    farClip = farZ;
+    projectionMatrix_ = Matrix4x4::MakePerspectiveProjection(fovY_, aspectRaito_, nearClip, farClip);
 }

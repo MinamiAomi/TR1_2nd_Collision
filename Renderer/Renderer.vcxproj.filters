@@ -153,6 +153,9 @@
     <ClCompile Include="ObjLoad.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Frustum.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\MathUtils.hpp">
@@ -279,6 +282,9 @@
       <Filter>Collision</Filter>
     </ClInclude>
     <ClInclude Include="ObjLoad.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Frustum.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

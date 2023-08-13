@@ -17,6 +17,8 @@
 #include "CollisionManager.h"
 #include "ObjLoad.h"
 
+#include "Frustum.h"
+
 // クライアント領域サイズ
 const uint32_t kWindowWidth = 1280;
 const uint32_t kWindowHeight = 720;
@@ -83,6 +85,23 @@ private:
     std::vector<std::unique_ptr<CapsuleCollider>> capsuleObjects_;
 };
 
+void DrawFrustum(const Frustum& frustum, Renderer& renderer, const Vector4& color) {
+    renderer.DrawLine(frustum.GetCorner(Frustum::NearLowerLeft), frustum.GetCorner(Frustum::NearUpperLeft), color);
+    renderer.DrawLine(frustum.GetCorner(Frustum::NearUpperLeft), frustum.GetCorner(Frustum::NearUpperRight), color);
+    renderer.DrawLine(frustum.GetCorner(Frustum::NearUpperRight), frustum.GetCorner(Frustum::NearLowerRight), color);
+    renderer.DrawLine(frustum.GetCorner(Frustum::NearLowerRight), frustum.GetCorner(Frustum::NearLowerLeft), color);
+
+    renderer.DrawLine(frustum.GetCorner(Frustum::NearLowerLeft), frustum.GetCorner(Frustum::FarLowerLeft), color);
+    renderer.DrawLine(frustum.GetCorner(Frustum::NearUpperLeft), frustum.GetCorner(Frustum::FarUpperLeft), color);
+    renderer.DrawLine(frustum.GetCorner(Frustum::NearUpperRight), frustum.GetCorner(Frustum::FarUpperRight), color);
+    renderer.DrawLine(frustum.GetCorner(Frustum::NearLowerRight), frustum.GetCorner(Frustum::FarLowerRight), color);
+
+    renderer.DrawLine(frustum.GetCorner(Frustum::FarLowerLeft), frustum.GetCorner(Frustum::FarUpperLeft), color);
+    renderer.DrawLine(frustum.GetCorner(Frustum::FarUpperLeft), frustum.GetCorner(Frustum::FarUpperRight), color);
+    renderer.DrawLine(frustum.GetCorner(Frustum::FarUpperRight), frustum.GetCorner(Frustum::FarLowerRight), color);
+    renderer.DrawLine(frustum.GetCorner(Frustum::FarLowerRight), frustum.GetCorner(Frustum::FarLowerLeft), color);
+}
+
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 
     CG::DX12::D3DResourceLeakChecker leakChecker;
@@ -95,12 +114,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
         Input::Initialize();
 
         Camera camera;
-        camera.SetProjectionMatrix(45.0f * Math::ToRadian, float(kWindowWidth) / kWindowHeight, 0.1f, 1000.0f);
+        camera.SetProjectionMatrix(45.0f * Math::ToRadian, float(kWindowWidth) / kWindowHeight, 0.1f, 100.0f);
 
         DirectionalLight light;
         Vector3 lightRotate;
-        lightRotate.x = 45.0f * Math::ToRadian;
-        lightRotate.y = 45.0f * Math::ToRadian;
+        lightRotate.x = 90.0f * Math::ToRadian;
+        //lightRotate.y = 45.0f * Math::ToRadian;
 
         Player player;
         player.Initialize();
@@ -152,7 +171,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
                 vertices[i].normal = tetora.normals[i];
             }
             meshes.emplace_back(renderer.RegisterMesh(vertices, tetora.indices));
-  
+
             meshColliders.emplace_back(std::make_unique<MeshCollider>(), meshes.back());
             meshColliders.back().first->vertices = tetora.positions;
             meshColliders.back().first->isStatic = true;
@@ -179,7 +198,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
             meshColliders.back().first->transform.UpdateWorldMatrix();
             meshColliders.back().first->UpdateAABB();
             collisionManager.AddCollider(meshColliders.back().first.get());
-            
+
         }
         light.direction = Quaternion::MakeFromEulerAngle(lightRotate) * Vector3::unitZ;
         {
@@ -212,8 +231,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
                         player.UpdateMatrix();
                     }
                     // 描画
-                    {
+                    {   
+                        
                         renderer.StartRendering();
+                       /* {
+                            Matrix4x4 lightViewMatrix = Matrix4x4::MakeAffineInverse(Matrix4x4::MakeLookRotation(light.direction, Vector3::unitX), -light.direction * 50.0f);
+                            Matrix4x4 lightProjMatrix = Matrix4x4::MakeOrthographicProjection(2048.0f, 2048.0f, 1.0f, 100.0f);
+                        renderer.SetViewProjectionMatrix(lightViewMatrix, lightProjMatrix);
+                        }*/
                         renderer.SetViewProjectionMatrix(useDebugCamera ? camera.GetViewMatrix() : player.GetViewMatrix(), camera.GetProjectionMatrix());
                         renderer.SetDirectionalLight(light.direction, light.color, light.intensity);
 
@@ -237,18 +262,100 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
                         renderer.DrawLine(Vector3::up * 1000, Vector3::down * 1000, { 0,1,0,1 });
                         renderer.DrawLine(Vector3::forward * 1000, Vector3::back * 1000, { 0,0,1,1 });
 
+                        {
+                            Frustum mainCameraFrustum = Frustum(player.GetViewMatrix() * camera.GetProjectionMatrix());
+
+                            Matrix4x4 lightViewMatrix = Matrix4x4::MakeAffineInverse(Matrix4x4::MakeLookRotation(light.direction, Vector3::unitX), -light.direction * 5000.0f);
+                            Matrix4x4 lightProjMatrix = Matrix4x4::MakeOrthographicProjection(1024.0f, 1024.0f, 1.0f,10000.0f);
+
+
+                            const uint32_t numShadowMaps = 3;
+                            const float splitAreaTable[numShadowMaps + 1] = {
+                                camera.GetNearClip(),
+                                10.0f,
+                                50.0f,
+                               camera.GetFarClip()
+                            };
+
+                            Matrix4x4 lightViewProjMatrix = lightViewMatrix * lightProjMatrix;
+                            DrawFrustum(Frustum(lightViewProjMatrix), renderer, { 0,0,0,1 });
+                            Frustum shadowFrustums[numShadowMaps];
+                            const Vector4 frustumColor[]{
+                                {1.0f,0.0f,0.0f,1.0f},
+                                {0.0f,1.0f,0.0f,1.0f},
+                                {0.0f,0.0f,1.0f,1.0f}
+                            };
+                            for (uint32_t splitIndex = 0; splitIndex < numShadowMaps; ++splitIndex) {
+                                AABB cropAABB;
+                                Matrix4x4 projMatrix = Matrix4x4::MakePerspectiveProjection(camera.GetFovY(), camera.GetAspectRaito(), splitAreaTable[splitIndex], splitAreaTable[splitIndex + 1]);
+                                Frustum frustum = Frustum(player.GetViewMatrix() * projMatrix);
+                                DrawFrustum(frustum, renderer, frustumColor[splitIndex]);
+
+                                for (int i = 0; i < Frustum::NumCorners; ++i) {
+                                    cropAABB.Include(lightViewProjMatrix.ApplyTransformWDivide(frustum.GetCorner(static_cast<Frustum::CornerID>(i))));
+                                }
+                                Vector3 scale, offset;
+                                scale.x = 2.0f / (cropAABB.max.x - cropAABB.min.x);
+                                scale.y = 2.0f / (cropAABB.max.y - cropAABB.min.y);
+                                scale.z = 1.0f;
+                                offset.x = -0.5f * (cropAABB.max.x + cropAABB.min.x) * scale.x;
+                                offset.y = -0.5f * (cropAABB.max.y + cropAABB.min.y) * scale.y;
+                                offset.z = 0.0f;
+                                Matrix4x4 cropMatrix{
+                                    scale.x, 0.0f,0.0f,0.0f,
+                                    0.0f, scale.y,0.0f,0.0f,
+                                    0.0f, 0.0f,scale.z,0.0f,
+                                    offset.x, offset.y, offset.z, 1.0f };
+                                shadowFrustums[splitIndex] = Frustum(lightViewProjMatrix * cropMatrix);
+                                DrawFrustum(shadowFrustums[splitIndex], renderer, frustumColor[splitIndex]);
+
+                                Vector3 v[8];
+                                for (uint32_t i = 0; i < 8; ++i) {
+                                   v[i] = lightViewMatrix.ApplyTransformWDivide(frustum.GetCorner(static_cast<Frustum::CornerID>(i)));
+                                   v;
+                                }
+                                v[0] = v[0];
+                            }
+
+                            //// Build a matrix for cropping light's projection    
+                            //// Given vectors are in light's clip space 
+                            //Matrix Light::CalculateCropMatrix(Frustum splitFrustum) {
+                            //    Matrix lightViewProjMatrix = viewMatrix * projMatrix;
+                            //    // Find boundaries in light's clip space   
+                            //    BoundingBox cropBB = CreateAABB(splitFrustum.AABB, lightViewProjMatrix);
+                            //    // Use default near-plane value   
+                            //    cropBB.min.z = 0.0f;
+                            //    // Create the crop matrix   
+                            //    float scaleX, scaleY, scaleZ;
+                            //    float offsetX, offsetY, offsetZ;
+                            //    scaleX = 2.0f / (cropBB.max.x - cropBB.min.x);
+                            //    scaleY = 2.0f / (cropBB.max.y - cropBB.min.y);
+                            //    offsetX = -0.5f * (cropBB.max.x + cropBB.min.x) * scaleX;
+                            //    offsetY = -0.5f * (cropBB.max.y + cropBB.min.y) * scaleY;
+                            //    scaleZ = 1.0f / (cropBB.max.z - cropBB.min.z);
+                            //    offsetZ = -cropBB.min.z * scaleZ;
+                            //    return Matrix(scaleX, 0.0f, 0.0f, 0.0f,
+                            //        0.0f, scaleY, 0.0f, 0.0f,
+                            //        0.0f, 0.0f, scaleZ, 0.0f,
+                            //        offsetX, offsetY, offsetZ, 1.0f);
+                            //}
+
+                           // DrawFrustum(mainCameraFrustum, renderer, Vector4(1.0f));
+
+                        }
+
                         ImGui::Begin("Setting");
                         ImGui::Checkbox("Show aabb", &showAABB);
                         ImGui::Checkbox("Debug camera", &useDebugCamera);
 
-                       /* if (ImGui::TreeNodeEx("Light", ImGuiTreeNodeFlags_DefaultOpen)) {
+                        if (ImGui::TreeNodeEx("Light", ImGuiTreeNodeFlags_DefaultOpen)) {
                             ImGui::Ex::DragDegree3("Direction rotate", lightRotate);
                             light.direction = Quaternion::MakeFromEulerAngle(lightRotate) * Vector3::unitZ;
                             ImGui::Ex::TextVector3("Direction", light.direction);
                             ImGui::ColorEdit4("Color", &light.color.x);
                             ImGui::DragFloat("Intensity", &light.intensity, 0.01f);
                             ImGui::TreePop();
-                        }*/
+                        }
 
                         ImGui::End();
 
